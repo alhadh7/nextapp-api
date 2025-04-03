@@ -1,15 +1,17 @@
-
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from django.core.cache import cache
 import random, urllib.parse, urllib.request
 from rest_framework.throttling import UserRateThrottle
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
 from .models import OTP, Partner, CustomUser
 
@@ -20,28 +22,88 @@ AUTH_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJDLTI0QzIxNzgxMEUwOTQ4MyIsImlhdCI6M
 CUSTOMER_ID = "C-24C217810E09483"
 BASE_URL = "https://cpaas.messagecentral.com/verification/v3"
 
-# Send OTP via Message Central
+# # Send OTP via Message Central
+# def send_otp_via_whatsapp(phone_number):
+#     url = f"{BASE_URL}/send?countryCode=91&customerId={CUSTOMER_ID}&flowType=WHATSAPP&mobileNumber={phone_number}"
+#     headers = {'authToken': AUTH_TOKEN}
+#     response = requests.post(url, headers=headers)
+#     return response.json()
+
+# # Verify OTP via Message Central
+# def verify_otp_via_whatsapp(phone_number, verification_id, code):
+#     url = f"{BASE_URL}/validateOtp?countryCode=91&mobileNumber={phone_number}&verificationId={verification_id}&customerId={CUSTOMER_ID}&code={code}"
+#     print(url)
+#     headers = {'authToken': AUTH_TOKEN}
+#     response = requests.get(url, headers=headers)
+#     return response.json()
+
+
+
+# Add these functions at the top of your file after your imports
+# Mock OTP functions that can be easily toggled
+
+# Configuration flag to toggle between real and mock OTP
+USE_MOCK_OTP = True  # Set to False to use real WhatsApp OTP
+
+# Mock OTP functions
+def send_mock_otp(phone_number):
+    """Mock implementation for sending OTP"""
+    return {
+        'responseCode': 200,
+        'data': {
+            'verificationId': '1234'
+        }
+    }
+
+def verify_mock_otp(phone_number, verification_id, code):
+    """Mock implementation for verifying OTP"""
+    if verification_id == '1234' and code == '6969':
+        return {
+            'responseCode': 200,
+            'data': {
+                'verificationStatus': 'VERIFICATION_COMPLETED'
+            }
+        }
+    else:
+        return {
+            'responseCode': 702,
+            'message': 'Wrong OTP provided. Please try again.'
+        }
+
+# Modified send and verify functions that toggle between real and mock
 def send_otp_via_whatsapp(phone_number):
-    url = f"{BASE_URL}/send?countryCode=91&customerId={CUSTOMER_ID}&flowType=WHATSAPP&mobileNumber={phone_number}"
-    headers = {'authToken': AUTH_TOKEN}
-    response = requests.post(url, headers=headers)
-    return response.json()
+    if USE_MOCK_OTP:
+        return send_mock_otp(phone_number)
+    else:
+        url = f"{BASE_URL}/send?countryCode=91&customerId={CUSTOMER_ID}&flowType=WHATSAPP&mobileNumber={phone_number}"
+        headers = {'authToken': AUTH_TOKEN}
+        response = requests.post(url, headers=headers)
+        return response.json()
 
 # Verify OTP via Message Central
 def verify_otp_via_whatsapp(phone_number, verification_id, code):
-    url = f"{BASE_URL}/validateOtp?countryCode=91&mobileNumber={phone_number}&verificationId={verification_id}&customerId={CUSTOMER_ID}&code={code}"
-    print(url)
-    headers = {'authToken': AUTH_TOKEN}
-    response = requests.get(url, headers=headers)
-    return response.json()
+    if USE_MOCK_OTP:
+        return verify_mock_otp(phone_number, verification_id, code)
+    else:
+        url = f"{BASE_URL}/validateOtp?countryCode=91&mobileNumber={phone_number}&verificationId={verification_id}&customerId={CUSTOMER_ID}&code={code}"
+        print(url)
+        headers = {'authToken': AUTH_TOKEN}
+        response = requests.get(url, headers=headers)
+        return response.json()
+
+# Get JWT tokens for a user
+def get_tokens_for_user(user):
+    refresh = RefreshToken.for_user(user)
+    return {
+        'refresh': str(refresh),
+        'access': str(refresh.access_token),
+    }
 
 # Custom Throttling Class
 class OTPThrottle(UserRateThrottle):
-    rate = '2/min'  # Limit to 5 OTP requests per minute
+    rate = '2/min'  # Limit to 2 OTP requests per minute
 
 # Register User API
-from django.core.cache import cache  # Import cache
-
 class RegisterUserView(APIView):
     throttle_classes = [OTPThrottle]
 
@@ -112,10 +174,10 @@ class VerifyUserView(APIView):
             cache.delete(f'user_data_{phone_number}_{verification_id}')
             cache.delete(f'otp_retry_{phone_number}')
             
-            # Generate token
-            token, _ = Token.objects.get_or_create(user=user)
+            # Generate JWT tokens
+            tokens = get_tokens_for_user(user)
             
-            return Response({'token': token.key}, status=status.HTTP_200_OK)
+            return Response(tokens, status=status.HTTP_200_OK)
 
         # Handle different response codes
         error_messages = {
@@ -260,6 +322,8 @@ class VerifyPartnerView(APIView):
                     # Update the user record to mark as partner
                     existing_user.is_partner = True
                     existing_user.save()
+
+                user_to_token = partner if not existing_user else existing_user
             else:
                 # Create a new partner/user
                 partner = Partner.objects.create(
@@ -280,15 +344,17 @@ class VerifyPartnerView(APIView):
                             from django.core.files import File
                             partner.medical_certificate.save(filename, File(f), save=True)
                         default_storage.delete(medical_certificate_ref)
+                
+                user_to_token = partner
             
             # Clean up cache
             cache.delete(f'partner_data_{phone_number}_{verification_id}')
             cache.delete(f'otp_retry_{phone_number}')
             
-            # Generate token
-            token, _ = Token.objects.get_or_create(user=partner if not existing_user else existing_user)
+            # Generate JWT tokens
+            tokens = get_tokens_for_user(user_to_token)
             
-            return Response({'token': token.key}, status=status.HTTP_200_OK)
+            return Response(tokens, status=status.HTTP_200_OK)
 
         # Handle different response codes
         error_messages = {
@@ -377,10 +443,10 @@ class VerifyUserLoginView(APIView):
                 cache.delete(f'login_data_{phone_number}_{verification_id}')
                 cache.delete(f'otp_retry_{phone_number}')
                 
-                # Generate token
-                token, _ = Token.objects.get_or_create(user=user)
+                # Generate JWT tokens
+                tokens = get_tokens_for_user(user)
                 
-                return Response({'token': token.key}, status=status.HTTP_200_OK)
+                return Response(tokens, status=status.HTTP_200_OK)
             except CustomUser.DoesNotExist:
                 return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
         
@@ -467,10 +533,10 @@ class VerifyPartnerLoginView(APIView):
                 cache.delete(f'partner_login_data_{phone_number}_{verification_id}')
                 cache.delete(f'otp_retry_{phone_number}')
                 
-                # Generate token
-                token, _ = Token.objects.get_or_create(user=partner)
+                # Generate JWT tokens
+                tokens = get_tokens_for_user(partner)
                 
-                return Response({'token': token.key}, status=status.HTTP_200_OK)
+                return Response(tokens, status=status.HTTP_200_OK)
             except Partner.DoesNotExist:
                 return Response({'error': 'Partner not found'}, status=status.HTTP_404_NOT_FOUND)
         
@@ -491,8 +557,38 @@ class VerifyPartnerLoginView(APIView):
         return Response({'error': error_message, 'details': verification_response}, status=status.HTTP_400_BAD_REQUEST)
 
 
+# Token Refresh View
+class RefreshTokenView(APIView):
+    def post(self, request):
+        refresh_token = request.data.get('refresh')
+        
+        if not refresh_token:
+            return Response({'error': 'Refresh token is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            token = RefreshToken(refresh_token)
+            tokens = {
+                'access': str(token.access_token),
+                'refresh': str(token)
+            }
+            return Response(tokens, status=status.HTTP_200_OK)
+        except TokenError as e:
+            return Response({'error': str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+
+
 # Logout API
 class LogoutView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+    
     def post(self, request):
-        request.auth.delete()
-        return Response({'message': 'Logged out successfully'}, status=status.HTTP_200_OK)
+        try:
+            refresh_token = request.data.get('refresh')
+            if refresh_token:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+                return Response({'message': 'Logged out successfully'}, status=status.HTTP_200_OK)
+            else:
+                return Response({'error': 'Refresh token is required'}, status=status.HTTP_400_BAD_REQUEST)
+        except TokenError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)

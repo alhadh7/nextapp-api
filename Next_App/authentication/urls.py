@@ -11,8 +11,10 @@ from .views import (
     UserLoginView,
     VerifyUserLoginView,
     PartnerLoginView,
-    VerifyPartnerLoginView
+    VerifyPartnerLoginView,
+    RefreshTokenView
 )
+from rest_framework_simplejwt.views import TokenVerifyView
 
 urlpatterns = [
     # Registration endpoints
@@ -26,7 +28,11 @@ urlpatterns = [
     path('verify/login/user/', VerifyUserLoginView.as_view(), name='verify_login_user'),
     path('login/partner/', PartnerLoginView.as_view(), name='login_partner'),
     path('verify/login/partner/', VerifyPartnerLoginView.as_view(), name='verify_login_partner'),
-    
+
+    # JWT token endpoints
+    path('token/refresh/', RefreshTokenView.as_view(), name='token_refresh'),
+    path('token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+
     # Logout endpoint
     path('logout/', LogoutView.as_view(), name='logout'),
 ]
