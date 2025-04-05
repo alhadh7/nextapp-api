@@ -92,12 +92,20 @@ def verify_otp_via_whatsapp(phone_number, verification_id, code):
         return response.json()
 
 # Get JWT tokens for a user
+from rest_framework_simplejwt.tokens import RefreshToken
+
 def get_tokens_for_user(user):
     refresh = RefreshToken.for_user(user)
+
+    refresh['phone_number'] = user.phone_number
+    refresh['is_partner'] = user.is_partner
+
+
     return {
         'refresh': str(refresh),
         'access': str(refresh.access_token),
     }
+
 
 # Custom Throttling Class
 class OTPThrottle(UserRateThrottle):
@@ -208,6 +216,7 @@ class RegisterPartnerView(APIView):
         email = request.data.get('email')
         full_name = request.data.get('full_name')
         education = request.data.get('education')
+        experience = request.data.get('experience')
         medical_certificate = request.FILES.get('medical_certificate')
 
         retry_count = cache.get(f'otp_retry_{phone_number}', 0)
@@ -240,6 +249,7 @@ class RegisterPartnerView(APIView):
                 'email': email,
                 'full_name': full_name,
                 'education': education,
+                'experience': experience,
                 'medical_certificate_ref': medical_certificate_ref,  # Store the reference to the file
                 'verification_id': verification_id,
                 'timestamp': datetime.now().timestamp()
@@ -275,7 +285,7 @@ class VerifyPartnerView(APIView):
             full_name = partner_data.get('full_name', '')
             education = partner_data.get('education', '')
             medical_certificate_ref = partner_data.get('medical_certificate_ref')
-            
+            experience = partner_data.get('experience', '')
             # Check if user with this phone number already exists
             existing_user = CustomUser.objects.filter(phone_number=phone_number).first()
             
@@ -284,7 +294,7 @@ class VerifyPartnerView(APIView):
                 if hasattr(existing_user, 'partner'):
                     partner = existing_user.partner
                     partner.education = education
-                    
+                    partner.experience = experience
                     # Handle medical certificate if a reference was stored
                     if medical_certificate_ref:
                         from django.core.files.storage import default_storage
@@ -302,6 +312,7 @@ class VerifyPartnerView(APIView):
                     partner = Partner(
                         customuser_ptr=existing_user,
                         education=education,
+                        experience=experience,
                         is_partner=True
                     )
                     
@@ -326,13 +337,20 @@ class VerifyPartnerView(APIView):
                 user_to_token = partner if not existing_user else existing_user
             else:
                 # Create a new partner/user
-                partner = Partner.objects.create(
+                partner = Partner(
                     phone_number=phone_number,
                     email=email,
                     full_name=full_name,
                     education=education,
+                    experience=experience,
                     is_partner=True
                 )
+
+                # Set a default hashed password
+                partner.set_password("defaultpassword123")  # Change this to a secure value
+
+                # Now save the partner
+                partner.save()
                 
                 # Handle medical certificate
                 if medical_certificate_ref:
