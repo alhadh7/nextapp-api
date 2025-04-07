@@ -40,7 +40,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "authentication",
     # 'rest_framework.authtoken',  
-    'testapp',
+    # 'testapp',
+    'userapp',
+    'partnerapp',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',  # Add this for token blacklisting
 ]
@@ -209,4 +211,17 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
     'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+}
+
+
+RAZORPAY_KEY_ID = 'rzp_test_YkCy6jA2GFlk5F'
+RAZORPAY_KEY_SECRET = 'daOhxZJLVM1ShIlgGtZdLHYt'
+
+DAISY_SETTINGS = {
+    'site_title': 'Thrift Store',  # Title of the Admin site
+    'site_header': 'Thrift Store Admin Panel',  # Header text on the Admin panel page
+    'site_brand': 'Thrift Store',  # The brand name displayed in the admin panel
+    'welcome_sign': 'Welcome to Thrift Store Admin!',  # Welcome text
+    'site_logo': 'path_to_your_logo.png',  # Optional: Custom logo (relative path to static files)
+    'copyright': '© 2025 Thrift Store',  # Custom copyright notice
 }

@@ -189,3 +189,47 @@ class Review(models.Model):
     rating = models.PositiveIntegerField()  # 1-5 star rating
     comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+
+class PartnerSlot(models.Model):
+    partner = models.ForeignKey(Partner, on_delete=models.CASCADE, related_name='slots')
+    date = models.DateField()
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        unique_together = ('partner', 'date', 'start_time', 'end_time')
+
+    def __str__(self):
+        return f"{self.partner.full_name} - {self.date} {self.start_time}-{self.end_time}"
+
+
+class PartnerWallet(models.Model):
+    partner = models.OneToOneField(Partner, on_delete=models.CASCADE, related_name='wallet')
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    last_payout_date = models.DateTimeField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.partner.full_name}'s Wallet: ₹{self.balance}"
+    
+class Transaction(models.Model):
+    TRANSACTION_TYPES = (
+        ('booking_payment', 'Booking Payment'),
+        ('extension_payment', 'Extension Payment'),
+        ('partner_payout', 'Partner Payout'),
+    )
+    
+    booking = models.ForeignKey(Booking, on_delete=models.SET_NULL, null=True, blank=True, related_name='transactions')
+    extension = models.ForeignKey(BookingExtension, on_delete=models.SET_NULL, null=True, blank=True, related_name='transactions')
+    partner_wallet = models.ForeignKey(PartnerWallet, on_delete=models.SET_NULL, null=True, blank=True, related_name='transactions')
+    
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    transaction_type = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
+    razorpay_payment_id = models.CharField(max_length=100, null=True, blank=True)
+    razorpay_order_id = models.CharField(max_length=100, null=True, blank=True)
+    status = models.CharField(max_length=20, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"{self.transaction_type} - ₹{self.amount} - {self.status}"
