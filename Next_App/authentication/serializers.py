@@ -14,9 +14,16 @@ class PartnerSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'is_verified']
 
 class ServiceTypeSerializer(serializers.ModelSerializer):
+    # Adding a custom field to remove underscores from the 'name' field for the serialized output
+    name_no_underscore = serializers.SerializerMethodField()
+
     class Meta:
         model = ServiceType
-        fields = '__all__'
+        fields = '__all__'  # Keep all the model fields
+
+    def get_name_no_underscore(self, obj):
+        # Replace underscores with spaces in the 'name' field for display purposes
+        return obj.name.replace("_", " ")
 
 class BookingCreateSerializer(serializers.ModelSerializer):
     class Meta:
