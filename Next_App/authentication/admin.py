@@ -1,7 +1,8 @@
 from datetime import timezone
 from django.contrib import admin
 
-from .models import OTP, Booking, BookingExtension, BookingRequest, CustomUser, Partner, Review, ServiceType
+from .models import OTP, Booking, BookingExtension, BookingRequest, CustomUser, Partner, PartnerSlot, Review, ServiceType
+
 
 # Register your models here.
 admin.site.register(CustomUser)
@@ -56,3 +57,4 @@ class PartnerWalletAdmin(admin.ModelAdmin):
 
 admin.site.register(PartnerWallet, PartnerWalletAdmin)
 admin.site.register(Transaction)
+admin.site.register(PartnerSlot)

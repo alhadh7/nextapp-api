@@ -23,7 +23,8 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         model = Booking
         fields = [
             'service_type', 'partner_type', 'is_instant', 'hours', 
-            'scheduled_date', 'user_location', 'hospital_location'
+            'scheduled_date', 'user_location', 'hospital_location',
+            'notes'
         ]
     
     def validate(self, data):
@@ -35,7 +36,14 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         service_type = data.get('service_type')
         if service_type and service_type.name == 'checkup_companion' and not data.get('hospital_location'):
             raise serializers.ValidationError("Hospital location is required for 'Checkup Companion' service")
-            
+
+        # Ensure that service_type and partner_type are provided
+        if not data.get('service_type'):
+            raise serializers.ValidationError("Service type is required.")
+        
+        if not data.get('partner_type'):
+            raise serializers.ValidationError("Partner type is required.")
+
         return data
     
     def create(self, validated_data):

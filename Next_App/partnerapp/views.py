@@ -55,6 +55,22 @@ class ServiceTypeListView(generics.ListAPIView):
     queryset = ServiceType.objects.all()
     serializer_class = ServiceTypeSerializer
 
+class BookingHistoryView(generics.ListAPIView):
+    serializer_class = BookingDetailSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_partner:
+            # Partner's booking history
+            return Booking.objects.filter(partner=user, status__in=['completed', 'cancelled']).order_by('-created_at')
+        else:
+            # User's booking history
+            return Booking.objects.filter(user=user, status__in=['completed', 'cancelled']).order_by('-created_at')
+
+
+
 class BookingDetailView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]

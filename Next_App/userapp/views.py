@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, generics
@@ -34,6 +35,22 @@ class ServiceTypeListView(generics.ListAPIView):
     queryset = ServiceType.objects.all()
     serializer_class = ServiceTypeSerializer
 
+class BookingHistoryView(generics.ListAPIView):
+    serializer_class = BookingDetailSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_partner:
+            # Partner's booking history
+            return Booking.objects.filter(partner=user, status__in=['completed', 'cancelled']).order_by('-created_at')
+        else:
+            # User's booking history
+            return Booking.objects.filter(user=user, status__in=['completed', 'cancelled']).order_by('-created_at')
+
+
+
 class BookingDetailView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -69,7 +86,8 @@ class CreateBookingView(APIView):
             return Response({
                 "error": "Partners cannot make bookings."
             }, status=status.HTTP_403_FORBIDDEN)
-        
+
+
         # Get booking date based on type
         booking_data = request.data
         is_instant = booking_data.get("is_instant", True)
@@ -100,6 +118,52 @@ class CreateBookingView(APIView):
                 return Response({
                     "error": "You already have a booking on this day that is not yet completed."
                 }, status=status.HTTP_400_BAD_REQUEST)
+
+        if is_instant:
+            active_now = Booking.objects.filter(
+                user=request.user,
+                is_instant=True,
+                status__in=['pending', 'confirmed', 'in_progress']
+            )
+            if active_now.exists():
+                return Response({
+                    "error": "You already have an active 'Book Now' booking in progress."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+        if not is_instant:
+            scheduled_date = booking_data.get("scheduled_date")
+            scheduled_time_str = booking_data.get("scheduled_time")
+            hours = int(booking_data.get("hours", 0))
+
+            if not scheduled_date or not scheduled_time_str:
+                return Response({
+                    "error": "Both date and time are required for book later."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            scheduled_time = datetime.strptime(scheduled_time_str, "%H:%M").time()
+
+            # Convert to datetime for range comparison
+            start_datetime = datetime.combine(
+                datetime.strptime(scheduled_date, "%Y-%m-%d").date(),
+                scheduled_time
+            )
+            end_datetime = start_datetime + timedelta(hours=hours)
+
+            overlapping_bookings = Booking.objects.filter(
+                user=request.user,
+                scheduled_date=scheduled_date,
+                scheduled_time__isnull=False,
+            ).exclude(status='cancelled')
+
+            for b in overlapping_bookings:
+                existing_start = datetime.combine(b.scheduled_date, b.scheduled_time)
+                existing_end = existing_start + timedelta(hours=b.hours)
+                if (start_datetime < existing_end) and (end_datetime > existing_start):
+                    return Response({
+                        "error": f"Booking overlaps with another scheduled from {existing_start.time()} to {existing_end.time()}."
+                    }, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -284,7 +348,7 @@ class ProcessPaymentView(APIView):
             transaction.razorpay_payment_id = razorpay_payment_id
             transaction.status = 'completed'
             transaction.save()
-            
+             
             # Update partner wallet (if applicable)
             if booking.partner:
                 partner_amount = booking.total_amount * Decimal('0.75')

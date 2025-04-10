@@ -5,11 +5,13 @@ from . import views
 
 
 urlpatterns = [
-    # Common endpoints
     path('services/', views.ServiceTypeListView.as_view(), name='service-list'),
     path('bookings/<int:booking_id>/', views.BookingDetailView.as_view(), name='booking-detail'),
-    path('home/', views.PartnerHomeView.as_view(), name='partner-home'),
+    path('bookings/history/', views.BookingHistoryView.as_view(), name='booking-history'),
 
+
+
+    path('home/', views.PartnerHomeView.as_view(), name='partner-home'),
     path('book-slot/',views.BookSlotView.as_view(), name='partner-book-slot'),
     path('bookings/available/', views.AvailableBookingsView.as_view(), name='partner-available-bookings'),
     path('bookings/<int:booking_id>/accept/', views.AcceptBookingView.as_view(), name='partner-accept-booking'),

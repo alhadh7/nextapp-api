@@ -73,7 +73,7 @@ class Partner(CustomUser):
     experience = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
-        return f"{self.id}"
+        return f"Partner: {self.id} {self.full_name} ({self.phone_number})"
 
 # OTP Model
 class OTP(models.Model):
@@ -81,7 +81,9 @@ class OTP(models.Model):
     otp = models.CharField(max_length=6)
     created_at = models.DateTimeField(auto_now_add=True)
 
-
+    def __str__(self):
+        return f"OTP for {self.phone_number} - {self.otp}"
+    
 # Service types
 class ServiceType(models.Model):
     SERVICE_CHOICES = (
@@ -124,7 +126,11 @@ class Booking(models.Model):
     is_instant = models.BooleanField(default=True)  # True for "Book Now", False for "Book Later"
     hours = models.PositiveIntegerField()
     scheduled_date = models.DateField(null=True, blank=True)  # Only for "Book Later"
-    
+    scheduled_time = models.TimeField(null=True, blank=True)  # Only for "Book Later"
+    notes = models.TextField(blank=True, null=True)  # Optional field for storing additional notes
+
+
+
     # Locations
     user_location = models.CharField(max_length=255)
     hospital_location = models.CharField(max_length=255, null=True, blank=True)  # Only for "Checkup Companion"
@@ -166,6 +172,10 @@ class BookingRequest(models.Model):
     class Meta:
         unique_together = ('booking', 'partner')
 
+    def __str__(self):
+        return f"BookingRequest {self.id}: {self.booking.user.full_name} - {self.partner.full_name} - {self.status}"
+
+
 # Extension requests for additional hours
 class BookingExtension(models.Model):
     STATUS_CHOICES = (
@@ -183,6 +193,9 @@ class BookingExtension(models.Model):
     extension_amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment_status = models.CharField(max_length=20, default='pending')
 
+    def __str__(self):
+        return f"BookingExtension {self.id}: {self.booking.id} - {self.status}"
+    
 # Reviews and Ratings
 class Review(models.Model):
     booking = models.OneToOneField(Booking, on_delete=models.CASCADE, related_name='review')
@@ -190,6 +203,8 @@ class Review(models.Model):
     comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return f"Review {self.id} for Booking {self.booking.id} - Rating: {self.rating}"
 
 class PartnerSlot(models.Model):
     partner = models.ForeignKey(Partner, on_delete=models.CASCADE, related_name='slots')
@@ -202,7 +217,8 @@ class PartnerSlot(models.Model):
         unique_together = ('partner', 'date', 'start_time', 'end_time')
 
     def __str__(self):
-        return f"{self.partner.full_name} - {self.date} {self.start_time}-{self.end_time}"
+        return f"PartnerSlot {self.id}: {self.partner.full_name} - {self.date} {self.start_time}-{self.end_time}"
+
 
 
 class PartnerWallet(models.Model):
@@ -211,7 +227,7 @@ class PartnerWallet(models.Model):
     last_payout_date = models.DateTimeField(null=True, blank=True)
     
     def __str__(self):
-        return f"{self.partner.full_name}'s Wallet: ₹{self.balance}"
+        return f"PartnerWallet {self.id}: {self.partner.full_name} - ₹{self.balance}"
     
 class Transaction(models.Model):
     TRANSACTION_TYPES = (
@@ -232,4 +248,4 @@ class Transaction(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     
     def __str__(self):
-        return f"{self.transaction_type} - ₹{self.amount} - {self.status}"
+        return f"Transaction {self.id}: {self.transaction_type} - ₹{self.amount} - {self.status}"

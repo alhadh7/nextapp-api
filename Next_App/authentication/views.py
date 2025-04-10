@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
+from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -120,6 +121,18 @@ class RegisterUserView(APIView):
         email = request.data.get('email')
         full_name = request.data.get('full_name')
 
+        if CustomUser.objects.filter(email=email).exists():
+            # If the email exists, return a response with an error message
+            return JsonResponse({'message': 'This email already exists.'}, status=400)
+        
+        is_partner = request.data.get('is_partner', False)  # False means normal user, True means partner
+
+        # Check if the phone number is already registered as a normal user
+        if not is_partner:
+            user_exists = CustomUser.objects.filter(phone_number=phone_number, is_partner=False).exists()
+            if user_exists:
+                return Response({"error": "A normal user with this phone number already exists."}, status=status.HTTP_400_BAD_REQUEST)
+            
         retry_count = cache.get(f'otp_retry_{phone_number}', 0)
         if retry_count >= 3:
             return Response({'error': 'Maximum OTP retries reached. Try again later.'}, status=status.HTTP_429_TOO_MANY_REQUESTS)
@@ -138,7 +151,7 @@ class RegisterUserView(APIView):
                 'timestamp': datetime.now().timestamp()  # Track when the request was made
             }
             cache.set(f'user_data_{phone_number}_{verification_id}', user_data, timeout=1800)
-
+            print(user_data)
             # Increment retry count to prevent spam
             cache.set(f'otp_retry_{phone_number}', retry_count + 1, timeout=600)
 
@@ -154,7 +167,7 @@ class VerifyUserView(APIView):
         phone_number = request.data.get('phone_number')
         verification_id = request.data.get('verification_id')
         code = request.data.get('otp')
-
+        print(f"{phone_number} {verification_id} {code}")
         user_data = cache.get(f'user_data_{phone_number}_{verification_id}', {})
         if not user_data:
             return Response({'error': 'Registration session expired or invalid. Please register again.'}, 
@@ -218,6 +231,11 @@ class RegisterPartnerView(APIView):
         education = request.data.get('education')
         experience = request.data.get('experience')
         medical_certificate = request.FILES.get('medical_certificate')
+
+        # Check if a user (either normal or partner) already exists with the same phone number
+        user_exists = CustomUser.objects.filter(phone_number=phone_number, is_partner=True).exists()
+        if user_exists:
+            return Response({"error": "A partner with this phone number already exists."}, status=status.HTTP_400_BAD_REQUEST)
 
         retry_count = cache.get(f'otp_retry_{phone_number}', 0)
         if retry_count >= 3:
