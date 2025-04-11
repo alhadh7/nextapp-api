@@ -41,6 +41,10 @@ class CustomUser(AbstractBaseUser):
     is_superuser = models.BooleanField(default=False)
 
     objects = UserManager()
+
+    def get_full_name(self):
+        return self.full_name
+
     # Permission checks for Django Admin
     def has_perm(self, perm, obj=None):
         """
@@ -61,6 +65,9 @@ class CustomUser(AbstractBaseUser):
             return True
         # Implement more checks if needed for other roles
         return False
+
+
+
 
     def __str__(self):
         return f"{self.full_name} {self.phone_number} "

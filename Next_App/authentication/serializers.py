@@ -38,7 +38,8 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         # Validate that scheduled_date is provided for "Book Later"
         if not data.get('is_instant') and not data.get('scheduled_date'):
             raise serializers.ValidationError("Scheduled date is required for 'Book Later' bookings")
-        
+        if not data.get('is_instant') and not data.get('scheduled_time'):
+            raise serializers.ValidationError("Scheduled time is required for 'Book Later' bookings")
         # Validate that hospital_location is provided for "Checkup Companion"
         service_type = data.get('service_type')
         if service_type and service_type.name == 'checkup_companion' and not data.get('hospital_location'):

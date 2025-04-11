@@ -1,0 +1,116 @@
+<!-- adminapp/templates/adminapp/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Health Connect Admin{% endblock %}</title>
+    <!-- Include Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Include Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+    {% if user.is_authenticated and user.is_superuser %}
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <div class="bg-gray-800 text-white w-64 flex flex-col">
+            <div class="p-4 bg-gray-900">
+                <h2 class="text-2xl font-bold">Health Connect</h2>
+                <p class="text-sm">Admin Panel</p>
+            </div>
+            <nav class="flex-1 p-4">
+                <ul>
+                    <li class="mb-2">
+                        <a href="{% url 'adminapp:dashboard' %}" class="flex items-center p-2 rounded hover:bg-gray-700">
+                            <i class="fas fa-tachometer-alt w-6"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="{% url 'adminapp:user_list' %}" class="flex items-center p-2 rounded hover:bg-gray-700">
+                            <i class="fas fa-users w-6"></i>
+                            <span>Users</span>
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="{% url 'adminapp:partner_list' %}" class="flex items-center p-2 rounded hover:bg-gray-700">
+                            <i class="fas fa-user-md w-6"></i>
+                            <span>Partners</span>
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="{% url 'adminapp:booking_list' %}" class="flex items-center p-2 rounded hover:bg-gray-700">
+                            <i class="fas fa-calendar-check w-6"></i>
+                            <span>Bookings</span>
+                        </a>
+                    </li>
+                    <li class="mb-2">
+                        <a href="{% url 'adminapp:service_list' %}" class="flex items-center p-2 rounded hover:bg-gray-700">
+                            <i class="fas fa-concierge-bell w-6"></i>
+                            <span>Services</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            <div class="p-4 border-t border-gray-700">
+                <a href="{% url 'adminapp:logout' %}" class="flex items-center p-2 rounded hover:bg-gray-700">
+                    <i class="fas fa-sign-out-alt w-6"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top navigation bar -->
+            <header class="bg-white shadow">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+                    <h1 class="text-xl font-semibold">{% block header %}Dashboard{% endblock %}</h1>
+                    <div class="flex items-center">
+                        <span class="mr-2">{{ user.full_name }}</span>
+                        <button class="rounded-full h-8 w-8 bg-gray-200 flex items-center justify-center">
+                            <i class="fas fa-user"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+            
+            <!-- Page content -->
+            <main class="flex-1 overflow-auto p-4">
+                {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                    <div class="p-3 mb-2 rounded {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div class="bg-white p-6 rounded shadow">
+                    {% block content %}{% endblock %}
+                </div>
+            </main>
+        </div>
+    </div>
+    {% else %}
+    <div class="min-h-screen bg-gray-100 flex flex-col items-center justify-center">
+        {% if messages %}
+        <div class="mb-4 w-full max-w-md">
+            {% for message in messages %}
+            <div class="p-3 mb-2 rounded {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        {% block auth_content %}{% endblock %}
+    </div>
+    {% endif %}
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

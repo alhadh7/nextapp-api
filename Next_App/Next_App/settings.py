@@ -50,8 +50,16 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',  # Add this for token blacklisting
     'drf_yasg',
+    'adminapp',
+    'django_otp',
+    'django_otp.plugins.otp_totp',
 
 ]
+
+# Login/logout URLs
+# LOGIN_URL = '/adminapp/login/'  # Redirect here when login_required fails
+# LOGIN_REDIRECT_URL = '/adminapp/'  # Redirect here after successful login
+# LOGOUT_REDIRECT_URL = '/adminapp/login/'  # Redirect here after logout
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -61,6 +69,9 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+
+    'django_otp.middleware.OTPMiddleware',
+
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]

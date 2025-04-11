@@ -1,0 +1,52 @@
+<!-- adminapp/templates/adminapp/totp_setup.html -->
+{% extends 'adminapp/base.html' %}
+<!-- DEBUG: You are inside TOTP setup template -->
+
+{% block title %}Setup 2FA - Health Connect Admin{% endblock %}
+
+{% block auth_content   %}
+<div class="max-w-md mx-auto bg-white p-8 rounded shadow">
+    <h2 class="text-xl font-semibold mb-4">Set up Two-Factor Authentication</h2>
+    
+    {% comment %} {% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+            <div class="p-3 {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %} rounded">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %} {% endcomment %}
+    
+    <p class="mb-4">Scan the QR code below with your authenticator app (Google Authenticator, Authy, etc.)</p>
+    
+    <div class="bg-gray-100 p-4 rounded flex justify-center mb-6">
+        <img src="data:image/png;base64,{{ qr_code_image }}" alt="QR Code" class="w-48 h-48">
+    </div>
+    
+    <div class="mb-6">
+        <p class="text-sm text-gray-600 mb-1">Or enter this key manually into your app:</p>
+        <div class="bg-gray-100 p-2 rounded text-center font-mono">{{ secret_key }}</div>
+    </div>
+    
+    <form method="post" class="mb-6">
+        {% csrf_token %}
+        
+        <div class="mb-4">
+            <label for="id_totp_token" class="block text-gray-700 text-sm font-bold mb-2">Enter the 6-digit code from your app</label>
+            <input type="text" name="totp_token" id="id_totp_token" required 
+                   class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-center text-2xl letter-spacing-wide"
+                   placeholder="000000" maxlength="6" autocomplete="off">
+        </div>
+        
+        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white text-center font-bold py-2 px-4 rounded w-full">
+            Verify and Activate
+        </button>
+    </form>
+
+{% endif %}
+    <div class="text-sm text-gray-600 mb-4">
+        <p>Important: Two-factor authentication is required for all admin users. You must complete this setup to access the admin dashboard.</p>
+    </div>
+</div>
+{% endblock %}
