@@ -38,6 +38,15 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         # Validate that scheduled_date is provided for "Book Later"
         if not data.get('is_instant') and not data.get('scheduled_date'):
             raise serializers.ValidationError("Scheduled date is required for 'Book Later' bookings")
+
+        scheduled_time = data.get('scheduled_time')
+        if isinstance(scheduled_time, str):
+            try:
+                converted_time = datetime.strptime(scheduled_time.strip(), "%I:%M %p").time()
+                data['scheduled_time'] = converted_time
+            except ValueError:
+                raise serializers.ValidationError("Scheduled time must be in the format 'HH:MM AM/PM'")
+
         
         # Validate that hospital_location is provided for "Checkup Companion"
         service_type = data.get('service_type')
