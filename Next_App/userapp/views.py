@@ -144,6 +144,7 @@ class CreateBookingView(APIView):
 
             scheduled_time = datetime.strptime(scheduled_time_str, "%H:%M").time()
 
+
             # Convert to datetime for range comparison
             start_datetime = datetime.combine(
                 datetime.strptime(scheduled_date, "%Y-%m-%d").date(),
