@@ -142,8 +142,7 @@ class CreateBookingView(APIView):
                     "error": "Both date and time are required for book later."
                 }, status=status.HTTP_400_BAD_REQUEST)
 
-            # scheduled_time = datetime.strptime(scheduled_time_str, "%H:%M").time()
-            scheduled_time = datetime.strptime(scheduled_time_str.strip(), "%I:%M %p").time()
+            scheduled_time = datetime.strptime(scheduled_time_str, "%H:%M").time()
 
 
             # Convert to datetime for range comparison
