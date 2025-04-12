@@ -318,6 +318,36 @@
                     }
                 },
                 {
+                    "name": "Cancel Booking",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            { "key": "Authorization", "value": "Bearer {{access_token}}" },
+                            { "key": "Content-Type", "value": "application/json" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/user/bookings/{{booking_id}}/cancel/",
+                            "host": ["{{base_url}}"],
+                            "path": ["user", "bookings", "{{booking_id}}", "cancel"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Pending Bookings",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "Authorization", "value": "Bearer {{access_token}}" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/user/bookings/pending/",
+                            "host": ["{{base_url}}"],
+                            "path": ["user", "bookings", "pending"]
+                        }
+                    }
+                },
+                
+                {
                     "name": "Get Booking Details",
                     "request": {
                         "method": "GET",

@@ -182,13 +182,63 @@ class CreateBookingView(APIView):
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+
+class CancelBookingView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, booking_id):
+        try:
+            booking = Booking.objects.get(id=booking_id, user=request.user)
+        except Booking.DoesNotExist:
+            return Response({"error": "Booking not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if booking.status == 'cancelled':
+            return Response({"message": "Booking is already cancelled."}, status=status.HTTP_200_OK)
+
+        if booking.status in ['completed', 'in_progress']:
+            return Response({"error": "Cannot cancel a booking that is already in progress or completed."}, status=status.HTTP_400_BAD_REQUEST)
+
+        booking.status = 'cancelled'
+        booking.save()
+
+        return Response({"message": "Booking has been cancelled due to partner unavailability."}, status=status.HTTP_200_OK)
+
+
+class PendingBookingListView(generics.ListAPIView):
+    serializer_class = BookingDetailSerializer
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        return Booking.objects.filter(
+            user=user,
+            status='pending',
+            partner__isnull=True
+        ).order_by('-created_at')
+
+
 class BookingAvailablePartnersView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
     def get(self, request, booking_id):
         booking = get_object_or_404(Booking, id=booking_id, user=request.user)
-        
+
+        # Auto-cancel if expired and unassigned
+        if (
+            booking.status == 'pending' and
+            booking.partner is None and
+            timezone.now() - booking.created_at > timedelta(minutes=30)
+        ):
+            booking.status = 'cancelled'
+            booking.save()
+            return Response({
+                "error": "Booking auto-cancelled due to no available partners after 30 minutes."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+
         # Get partners who have already accepted this booking
         partners = Partner.objects.filter(
             booking_requests__booking=booking,

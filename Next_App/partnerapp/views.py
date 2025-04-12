@@ -247,7 +247,19 @@ class AvailableBookingsView(APIView):
                 return Response({
                     "error": "Access denied. You must be a verified partner to view available bookings."
                 }, status=status.HTTP_403_FORBIDDEN)
-            
+
+            # Auto-cancel expired unassigned bookings (older than 30 min)
+            cutoff_time = timezone.now() - timedelta(minutes=30)
+            expired_bookings = Booking.objects.filter(
+                status='pending',
+                partner__isnull=True,
+                created_at__lte=cutoff_time
+            )
+            for booking in expired_bookings:
+                booking.status = 'cancelled'
+                booking.save()
+
+
             now = timezone.localtime()
             current_time = now.time()
             today = now.date()
@@ -458,7 +470,14 @@ class ToggleWorkStatusView(APIView):
                 partner=partner,
                 payment_status='paid'  # Only allow if payment is complete
             )
-            
+
+            # ❌ Reject if booking is cancelled
+            if booking.status == 'cancelled':
+                return Response({
+                    "error": "Cannot toggle work status for a cancelled booking."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+
             # For "Book Later" bookings, check if the scheduled date is today or in the past
             if not booking.is_instant and booking.scheduled_date > timezone.now().date():
                 return Response({

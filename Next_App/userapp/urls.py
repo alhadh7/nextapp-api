@@ -16,6 +16,9 @@ urlpatterns = [
 
     # User endpoints
     path('bookings/create/', views.CreateBookingView.as_view(), name='create-booking'),
+    path('bookings/<int:booking_id>/cancel/', views.CancelBookingView.as_view(), name='cancel-booking'),
+
+    path('bookings/pending/', views.PendingBookingListView.as_view(), name='pending-bookings'),
     path('bookings/<int:booking_id>/available-partners/', views.BookingAvailablePartnersView.as_view(), name='booking-available-partners'),
     path('bookings/<int:booking_id>/select-partner/<int:partner_id>/', views.SelectPartnerView.as_view(), name='select-partner'),
 
