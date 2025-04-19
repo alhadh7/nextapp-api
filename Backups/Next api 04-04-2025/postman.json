@@ -1,0 +1,247 @@
+{
+    "info": {
+        "name": "Django REST Authentication API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "description": "API endpoints for user and partner registration, verification, login, and logout"
+    },
+    "item": [
+        {
+            "name": "User Management",
+            "item": [
+                {
+                    "name": "Register User",
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Content-Type", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/auth/register/user/", "host": ["{{base_url}}"], "path": ["auth","register", "user"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone_number\": \"9876543210\", \"email\": \"user@example.com\", \"full_name\": \"John Doe\"}"
+                        }
+                    }
+                },
+                {
+                    "name": "Verify User OTP",
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Content-Type", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/auth/verify/user/", "host": ["{{base_url}}"], "path": ["auth","verify", "user"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone_number\": \"9876543210\", \"verification_id\": \"123456\", \"otp\": \"123456\"}"
+                        }
+                    }
+                },
+                {
+                    "name": "User Login (Request OTP)",
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Content-Type", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/auth/login/user/", "host": ["{{base_url}}"], "path": ["auth","login", "user"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone_number\": \"9876543210\"}"
+                        }
+                    }
+                },
+                {
+                    "name": "Verify User Login OTP",
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Content-Type", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/auth/verify/login/user/", "host": ["{{base_url}}"], "path": ["auth","verify", "login", "user"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone_number\": \"9876543210\", \"verification_id\": \"123456\", \"otp\": \"123456\"}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Partner Management",
+            "item": [
+                {
+                    "name": "Register Partner",
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Content-Type", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/auth/register/partner/", "host": ["{{base_url}}"], "path": ["auth","register", "partner"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone_number\": \"9876543211\", \"email\": \"partner@example.com\", \"full_name\": \"Dr. Smith\", \"education\": \"MBBS\", \"experience\": \"10\"}"
+                        }
+                    }
+                },
+                {
+                    "name": "Register Partner (with Medical Certificate)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {"raw": "{{base_url}}/auth/register/partner/", "host": ["{{base_url}}"], "path": ["auth","register", "partner"]},
+                        "body": {
+                            "mode": "formdata",
+                        "formdata": [
+                            {"key": "phone_number", "value": "9876543211", "type": "text"},
+                            {"key": "email", "value": "partner@example.com", "type": "text"},
+                            {"key": "full_name", "value": "Dr. Smith", "type": "text"},
+                            {"key": "education", "value": "MBBS", "type": "text"},
+                            {"key": "medical_certificate", "type": "file", "src": ""},
+                            {"key": "experience", "value": "10", "type": "text"}
+                        ]
+
+                        }
+                    }
+                },
+                {
+                    "name": "Verify Partner OTP",
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Content-Type", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/auth/verify/partner/", "host": ["{{base_url}}"], "path": ["auth","verify", "partner"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone_number\": \"9876543211\", \"verification_id\": \"123456\", \"otp\": \"123456\"}"
+                        }
+                    }
+                },
+                {
+                    "name": "Partner Login (Request OTP)",
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Content-Type", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/auth/login/partner/", "host": ["{{base_url}}"], "path": ["auth","login", "partner"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone_number\": \"9876543211\"}"
+                        }
+                    }
+                },
+                {
+                    "name": "Verify Partner Login OTP",
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Content-Type", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/auth/verify/login/partner/", "host": ["{{base_url}}"], "path": ["auth","verify", "login", "partner"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone_number\": \"9876543211\", \"verification_id\": \"123456\", \"otp\": \"123456\"}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Session Management",
+            "item": [
+                {
+                    "name": "Token Refresh",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{ \"refresh\": \"{{refresh_token}}\" }"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/token/refresh/",
+                            "host": ["{{base_url}}"],
+                            "path": ["auth", "token", "refresh"]
+                        }
+                    }
+                },
+                {
+                    "name": "Token Verify",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{ \"token\": \"{{access_token}}\" }"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/token/verify/",
+                            "host": ["{{base_url}}"],
+                            "path": ["auth", "token", "verify"]
+                        }
+                    }
+                },
+                {
+                    "name": "Logout",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"},
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{ \"refresh\": \"{{refresh_token}}\" }"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/logout/",
+                            "host": ["{{base_url}}"],
+                            "path": ["auth", "logout"]
+                        }
+                    }
+                }
+            ]
+        },
+        
+        {
+            "name": "Home pages",
+            "item": [
+                {
+                    "name": "User Home",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+                        "url": {"raw": "{{base_url}}/test/user/home/", "host": ["{{base_url}}"], "path": ["test", "user", "home"]}
+                    }
+                },
+                {
+                    "name": "Partner Home",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
+                        "url": {"raw": "{{base_url}}/test/partner/home/", "host": ["{{base_url}}"], "path": ["test", "partner", "home"]}
+                    }
+                }
+            ]
+        }
+        
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://127.0.0.1:8000",
+            "type": "string"
+        },
+        {
+            "key": "user_token",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "event": [
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "if (pm.response.code === 200) {",
+                    "    const jsonData = pm.response.json();",
+                    "    if (jsonData.token) {",
+                    "        pm.environment.set('user_token', jsonData.token);",
+                    "        console.log('Token saved to environment');",
+                    "    }",
+                    "}"
+                ]
+            }
+        }
+    ]
+}

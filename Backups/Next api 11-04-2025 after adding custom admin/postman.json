@@ -1,0 +1,587 @@
+{
+    "info": {
+        "name": "Health connect API",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "description": "API endpoints for user and partner registration, verification, login, and logout as well as booking management"
+    },
+    "item": [
+        {
+            "name": "User Management",
+            "item": [
+                {
+                    "name": "Register User",
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Content-Type", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/auth/register/user/", "host": ["{{base_url}}"], "path": ["auth","register", "user"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone_number\": \"9876543210\", \"email\": \"user@example.com\", \"full_name\": \"John Doe\"}"
+                        }
+                    }
+                },
+                {
+                    "name": "Verify User OTP",
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Content-Type", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/auth/verify/user/", "host": ["{{base_url}}"], "path": ["auth","verify", "user"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone_number\": \"9876543210\", \"verification_id\": \"123456\", \"otp\": \"123456\"}"
+                        }
+                    }
+                },
+                {
+                    "name": "User Login (Request OTP)",
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Content-Type", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/auth/login/user/", "host": ["{{base_url}}"], "path": ["auth","login", "user"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone_number\": \"9876543210\"}"
+                        }
+                    }
+                },
+                {
+                    "name": "Verify User Login OTP",
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Content-Type", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/auth/verify/login/user/", "host": ["{{base_url}}"], "path": ["auth","verify", "login", "user"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone_number\": \"9876543210\", \"verification_id\": \"123456\", \"otp\": \"123456\"}"
+                        }
+                    }
+                },
+                {
+                    "name": "User Home",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"}
+                        ],
+                        "url": {"raw": "{{base_url}}/user/home/", "host": ["{{base_url}}"], "path": ["user","home"]}
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Partner Management",
+            "item": [
+                {
+                    "name": "Register Partner",
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Content-Type", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/auth/register/partner/", "host": ["{{base_url}}"], "path": ["auth","register", "partner"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone_number\": \"9876543211\", \"email\": \"partner@example.com\", \"full_name\": \"Dr. Smith\", \"education\": \"MBBS\", \"experience\": \"10\"}"
+                        }
+                    }
+                },
+                {
+                    "name": "Register Partner (with Medical Certificate)",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {"raw": "{{base_url}}/auth/register/partner/", "host": ["{{base_url}}"], "path": ["auth","register", "partner"]},
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {"key": "phone_number", "value": "9876543211", "type": "text"},
+                                {"key": "email", "value": "partner@example.com", "type": "text"},
+                                {"key": "full_name", "value": "Dr. Smith", "type": "text"},
+                                {"key": "education", "value": "MBBS", "type": "text"},
+                                {"key": "medical_certificate", "type": "file", "src": ""},
+                                {"key": "experience", "value": "10", "type": "text"}
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Verify Partner OTP",
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Content-Type", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/auth/verify/partner/", "host": ["{{base_url}}"], "path": ["auth","verify", "partner"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone_number\": \"9876543211\", \"verification_id\": \"123456\", \"otp\": \"123456\"}"
+                        }
+                    }
+                },
+                {
+                    "name": "Partner Login (Request OTP)",
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Content-Type", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/auth/login/partner/", "host": ["{{base_url}}"], "path": ["auth","login", "partner"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone_number\": \"9876543211\"}"
+                        }
+                    }
+                },
+                {
+                    "name": "Verify Partner Login OTP",
+                    "request": {
+                        "method": "POST",
+                        "header": [{"key": "Content-Type", "value": "application/json"}],
+                        "url": {"raw": "{{base_url}}/auth/verify/login/partner/", "host": ["{{base_url}}"], "path": ["auth","verify", "login", "partner"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"phone_number\": \"9876543211\", \"verification_id\": \"123456\", \"otp\": \"123456\"}"
+                        }
+                    }
+                },
+                {
+                    "name": "Partner Home",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"}
+                        ],
+                        "url": {"raw": "{{base_url}}/partner/home/", "host": ["{{base_url}}"], "path": ["partner", "home"]}
+                    }
+                },
+                {
+                    "name": "Get Booking Details for partner",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"}
+                        ],
+                        "url": {"raw": "{{base_url}}/partner/bookings/{{booking_id}}/", "host": ["{{base_url}}"], "path": ["partner","bookings", "{{booking_id}}"]}
+                    }
+                },
+                {
+                    "name": "Get Booking History for Partner",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "Authorization", "value": "Bearer {{access_token}}" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/partner/bookings/history/",
+                            "host": ["{{base_url}}"],
+                            "path": ["partner", "bookings", "history"]
+                        }
+                    }
+                },
+                {
+                    "name": "Book Slot",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/partner/book-slot/",
+                            "host": ["{{base_url}}"],
+                            "path": ["partner", "book-slot"]
+                        },
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"slots\": [\n        {\n            \"date\": \"2025-04-08\",\n            \"start_time\": \"09:00\",\n            \"end_time\": \"11:00\"\n        },\n        {\n            \"date\": \"2025-04-08\",\n            \"start_time\": \"11:00\",\n            \"end_time\": \"13:00\"\n        }\n    ]\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Get Available Bookings",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"}
+                        ],
+                        "url": {"raw": "{{base_url}}/partner/bookings/available/", "host": ["{{base_url}}"], "path": ["partner", "bookings", "available"]}
+                    }
+                },
+                {
+                    "name": "Accept Booking",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"},
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "url": {"raw": "{{base_url}}/partner/bookings/{{booking_id}}/accept/", "host": ["{{base_url}}"], "path": ["partner", "bookings", "{{booking_id}}", "accept"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        }
+                    }
+                },
+                {
+                    "name": "Get Active Bookings",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"}
+                        ],
+                        "url": {"raw": "{{base_url}}/partner/bookings/active/", "host": ["{{base_url}}"], "path": ["partner", "bookings", "active"]}
+                    }
+                },
+                {
+                    "name": "Toggle Work Status",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"},
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "url": {"raw": "{{base_url}}/partner/bookings/{{booking_id}}/toggle-status/", "host": ["{{base_url}}"], "path": ["partner", "bookings", "{{booking_id}}", "toggle-status"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        }
+                    }
+                },
+                {
+                    "name": "Respond to Extension Request",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"},
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "url": {"raw": "{{base_url}}/partner/extensions/{{extension_id}}/respond/", "host": ["{{base_url}}"], "path": ["partner", "extensions", "{{extension_id}}", "respond"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"response\": \"approve\"}"
+                        }
+                    }
+                },
+                {
+                    "name": "Get Completed Bookings",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"}
+                        ],
+                        "url": {"raw": "{{base_url}}/partner/bookings/completed/", "host": ["{{base_url}}"], "path": ["partner", "bookings", "completed"]}
+                    }
+                },
+                {
+                    "name": "Get Partner Reviews",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"}
+                        ],
+                        "url": {"raw": "{{base_url}}/partner/reviews/", "host": ["{{base_url}}"], "path": ["partner", "reviews"]}
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Service Management",
+            "item": [
+                {
+                    "name": "Get Service Types",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"}
+                        ],
+                        "url": {"raw": "{{base_url}}/user/services/", "host": ["{{base_url}}"], "path": ["user","services"]}
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Booking Management",
+            "item": [
+                {
+                    "name": "Create Booking",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"},
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "url": {"raw": "{{base_url}}/user/bookings/create/", "host": ["{{base_url}}"], "path": ["user","bookings", "create"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"service_type\": 1,\n    \"partner_type\": \"trained\",\n    \"is_instant\": true,\n    \"hours\": 4,\n    \"user_location\": \"123 Main Street, Anytown\",\n    \"hospital_location\": \"General Hospital, Anytown\"\n,\n    \"notes\": \"Bring n95 Mask\"\n}"
+                        }
+                    }
+                },
+                {
+                    "name": "Get Booking Details",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"}
+                        ],
+                        "url": {"raw": "{{base_url}}/user/bookings/{{booking_id}}/", "host": ["{{base_url}}"], "path": ["user","bookings", "{{booking_id}}"]}
+                    }
+                },
+                {
+                    "name": "Get Booking History for User",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "Authorization", "value": "Bearer {{access_token}}" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/user/bookings/history/",
+                            "host": ["{{base_url}}"],
+                            "path": ["user", "bookings", "history"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Available Partners",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"}
+                        ],
+                        "url": {"raw": "{{base_url}}/user/bookings/{{booking_id}}/available-partners/", "host": ["{{base_url}}"], "path": ["user","bookings", "{{booking_id}}", "available-partners"]}
+                    }
+                },
+                {
+                    "name": "Select Partner",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"},
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "url": {"raw": "{{base_url}}/user/bookings/{{booking_id}}/select-partner/{{partner_id}}/", "host": ["{{base_url}}"], "path": ["user","bookings", "{{booking_id}}", "select-partner", "{{partner_id}}"]}
+                    }
+                },
+                {
+                    "name": "Create Booking Order",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"},
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/user/bookings/{{booking_id}}/create-order/",
+                            "host": ["{{base_url}}"],
+                            "path": ["user", "bookings", "{{booking_id}}", "create-order"]
+                        }
+                    }
+                },
+                {
+                    "name": "Process Booking Payment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"},
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/user/bookings/{{booking_id}}/process-payment/",
+                            "host": ["{{base_url}}"],
+                            "path": ["user", "bookings", "{{booking_id}}", "process-payment"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Extension Order",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"},
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/user/extensions/{{extension_id}}/create-order/",
+                            "host": ["{{base_url}}"],
+                            "path": ["user", "extensions", "{{extension_id}}", "create-order"]
+                        }
+                    }
+                },
+                {
+                    "name": "Process Extension Payment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"},
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/user/extensions/{{extension_id}}/process-payment/",
+                            "host": ["{{base_url}}"],
+                            "path": ["user", "extensions", "{{extension_id}}", "process-payment"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Active Bookings",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"}
+                        ],
+                        "url": {"raw": "{{base_url}}/user/bookings/active/", "host": ["{{base_url}}"], "path": ["user","bookings", "active"]}
+                    }
+                },
+                {
+                    "name": "Request Booking Extension",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"},
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "url": {"raw": "{{base_url}}/user/bookings/{{booking_id}}/extension/", "host": ["{{base_url}}"], "path": ["user","bookings", "{{booking_id}}", "extension"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"additional_hours\": 2\n}"
+                        }
+                    }
+                },
+
+                {
+                    "name": "Create Review",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"},
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "url": {"raw": "{{base_url}}/user/bookings/{{booking_id}}/review/", "host": ["{{base_url}}"], "path": ["user","bookings", "{{booking_id}}", "review"]},
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"rating\": 5,\n    \"comment\": \"Excellent service! Very professional and helpful.\"\n}"
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Session Management",
+            "item": [
+                {
+                    "name": "Token Refresh",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{ \"refresh\": \"{{refresh_token}}\" }"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/token/refresh/",
+                            "host": ["{{base_url}}"],
+                            "path": ["auth", "token", "refresh"]
+                        }
+                    }
+                },
+                {
+                    "name": "Token Verify",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{ \"token\": \"{{access_token}}\" }"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/token/verify/",
+                            "host": ["{{base_url}}"],
+                            "path": ["auth", "token", "verify"]
+                        }
+                    }
+                },
+                {
+                    "name": "Logout",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {"key": "Authorization", "value": "Bearer {{access_token}}"},
+                            {"key": "Content-Type", "value": "application/json"}
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{ \"refresh\": \"{{refresh_token}}\" }"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/logout/",
+                            "host": ["{{base_url}}"],
+                            "path": ["auth", "logout"]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "base_url",
+            "value": "http://127.0.0.1:8000",
+            "type": "string"
+        },
+        {
+            "key": "access_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "refresh_token",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "booking_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "partner_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "request_id",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "extension_id",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "event": [
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "if (pm.response.code === 200 || pm.response.code === 201) {",
+                    "    const jsonData = pm.response.json();",
+                    "    if (jsonData.access) {",
+                    "        pm.environment.set('access_token', jsonData.access);",
+                    "        console.log('Access token saved to environment');",
+                    "    }",
+                    "    if (jsonData.refresh) {",
+                    "        pm.environment.set('refresh_token', jsonData.refresh);",
+                    "        console.log('Refresh token saved to environment');",
+                    "    }",
+                    "}"
+                ]
+            }
+        }
+    ]
+}
