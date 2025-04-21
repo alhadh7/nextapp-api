@@ -313,7 +313,7 @@
                         "url": {"raw": "{{base_url}}/user/bookings/create/", "host": ["{{base_url}}"], "path": ["user","bookings", "create"]},
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n    \"service_type\": 1,\n    \"partner_type\": \"trained\",\n    \"is_instant\": true,\n    \"hours\": 4,\n    \"user_location\": \"123 Main Street, Anytown\",\n    \"hospital_location\": \"General Hospital, Anytown\"\n,\n    \"notes\": \"Bring n95 Mask\"\n}"
+                            "raw": "{\n    \"service_type\": 1,\n    \"partner_type\": \"trained\",\n    \"is_instant\": true,\n    \"hours\": 4,\n    \"user_location\": \"123 Main Street, Anytown\",\n    \"hospital_location\": \"General Hospital, Anytown\"\n,\n    \"notes\": \"Bring n95 Mask\"\n  \"long\": -74.0060,\n    \"lang\": 40.7128\n }"
                         }
                     }
                 },
