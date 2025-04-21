@@ -31,7 +31,7 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         fields = [
             'service_type', 'partner_type', 'is_instant', 'hours', 
             'scheduled_date', 'user_location', 'hospital_location',
-            'notes'
+            'notes' , 'long', 'lang'
         ]
     
     def validate(self, data):

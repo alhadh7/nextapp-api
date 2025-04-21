@@ -140,6 +140,8 @@ class Booking(models.Model):
 
     # Locations
     user_location = models.CharField(max_length=255)
+    lang = models.FloatField(null=True, blank=True)  # Latitude
+    long = models.FloatField(null=True, blank=True)  # Longitude
     hospital_location = models.CharField(max_length=255, null=True, blank=True)  # Only for "Checkup Companion"
     
     # Status tracking
