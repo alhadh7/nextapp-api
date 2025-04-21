@@ -16,3 +16,22 @@ class TOTPVerificationForm(forms.Form):
         min_length=6,
         widget=forms.TextInput(attrs={'placeholder': 'Enter 6-digit code'})
     )
+
+
+
+from django import forms
+from authentication.models import CustomUser
+
+class UserUpdateForm(forms.ModelForm):
+    class Meta:
+        model = CustomUser
+        fields = ['full_name', 'email', 'phone_number']  # Adjust fields as needed
+
+
+from django import forms
+from authentication.models import Booking
+
+class BookingForm(forms.ModelForm):
+    class Meta:
+        model = Booking
+        fields = ['status', 'notes']

@@ -19,4 +19,6 @@ urlpatterns = [
     path('partners/', partner_list, name='partner_list'),
     path('bookings/', booking_list, name='booking_list'),
     path('services/', service_list, name='service_list'),
+    path('bookings/edit/<int:booking_id>/', edit_booking, name='edit_booking'),
+
 ]

@@ -451,11 +451,47 @@ def dashboard(request):
     
     return render(request, 'adminapp/dashboard.html', context)
 
+# @admin_required
+# def user_list(request):
+#     """List all users"""
+#     users = CustomUser.objects.filter(is_partner=False, is_superuser=False).order_by('-id')
+    
+#     # Set up pagination
+#     paginator = Paginator(users, 20)  # 20 users per page
+#     page_number = request.GET.get('page')
+#     page_obj = paginator.get_page(page_number)
+    
+#     return render(request, 'adminapp/user_list.html', {'page_obj': page_obj})
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.core.paginator import Paginator
+from authentication.models import CustomUser
+from .forms import UserUpdateForm  # Create this form to handle user modification
+
 @admin_required
 def user_list(request):
-    """List all users"""
+    """List all users with options to delete and modify."""
     users = CustomUser.objects.filter(is_partner=False, is_superuser=False).order_by('-id')
     
+    # Handle delete user
+    if request.method == 'POST' and 'delete_user' in request.POST:
+        user_id = request.POST.get('user_id')
+        user_to_delete = get_object_or_404(CustomUser, id=user_id)
+        user_to_delete.delete()
+        messages.success(request, "User deleted successfully.")
+        return redirect('adminapp:user_list')
+    
+    # Handle update user
+    if request.method == 'POST' and 'update_user' in request.POST:
+        user_id = request.POST.get('user_id')
+        user_to_update = get_object_or_404(CustomUser, id=user_id)
+        form = UserUpdateForm(request.POST, instance=user_to_update)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "User updated successfully.")
+            return redirect('adminapp:user_list')
+
     # Set up pagination
     paginator = Paginator(users, 20)  # 20 users per page
     page_number = request.GET.get('page')
@@ -463,17 +499,56 @@ def user_list(request):
     
     return render(request, 'adminapp/user_list.html', {'page_obj': page_obj})
 
+
+
+# @admin_required
+# def partner_list(request):
+#     """List all partners"""
+#     partners = Partner.objects.all().order_by('-id')
+
+
+    
+#     # Set up pagination
+#     paginator = Paginator(partners, 20)  # 20 partners per page
+#     page_number = request.GET.get('page')
+#     page_obj = paginator.get_page(page_number)
+    
+#     return render(request, 'adminapp/partner_list.html', {'page_obj': page_obj})
+
+
 @admin_required
 def partner_list(request):
-    """List all partners"""
+    """List all partners with options to edit and delete."""
     partners = Partner.objects.all().order_by('-id')
-    
-    # Set up pagination
-    paginator = Paginator(partners, 20)  # 20 partners per page
+
+    # Handle delete partner
+    if request.method == 'POST' and 'delete_partner' in request.POST:
+        partner_id = request.POST.get('partner_id')
+        partner_to_delete = get_object_or_404(Partner, id=partner_id)
+        partner_to_delete.delete()
+        messages.success(request, "Partner deleted successfully.")
+        return redirect('adminapp:partner_list')
+
+    # Handle update partner
+    if request.method == 'POST' and 'update_partner' in request.POST:
+        partner_id = request.POST.get('partner_id')
+        partner = get_object_or_404(Partner, id=partner_id)
+
+        partner.full_name = request.POST.get('full_name')
+        partner.phone_number = request.POST.get('phone_number')
+        partner.education = request.POST.get('education')
+        partner.is_verified = bool(request.POST.get('is_verified'))
+        partner.save()
+        
+        messages.success(request, "Partner updated successfully.")
+        return redirect('adminapp:partner_list')
+
+    paginator = Paginator(partners, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
+
     return render(request, 'adminapp/partner_list.html', {'page_obj': page_obj})
+
 
 @admin_required
 def booking_list(request):
@@ -487,9 +562,59 @@ def booking_list(request):
     
     return render(request, 'adminapp/booking_list.html', {'page_obj': page_obj})
 
+from django.shortcuts import render, get_object_or_404, redirect
+from authentication.models import Booking
+from .forms import BookingForm  # You will need to create this form if not already created
+
+@admin_required
+def edit_booking(request, booking_id):
+    """Edit a booking's details."""
+    booking = get_object_or_404(Booking, id=booking_id)
+    
+    if request.method == 'POST':
+        status = request.POST.get('status')
+        notes = request.POST.get('notes')
+        
+        # Update the booking fields
+        booking.status = status
+        booking.notes = notes
+        booking.save()
+        
+        # Redirect to the booking list after saving
+        return redirect('adminapp:booking_list')
+
+    return redirect('adminapp:booking_list')  # In case of a GET request, just redirect back
+
+
+# @admin_required
+# def service_list(request):
+#     """List all service types"""
+#     services = ServiceType.objects.all().order_by('name')
+    
+#     return render(request, 'adminapp/service_list.html', {'services': services})
+
 @admin_required
 def service_list(request):
-    """List all service types"""
     services = ServiceType.objects.all().order_by('name')
-    
+
+    if request.method == 'POST':
+        service_id = request.POST.get('service_id')
+
+        # Delete
+        if 'delete_service' in request.POST:
+            service = get_object_or_404(ServiceType, id=service_id)
+            service.delete()
+            messages.success(request, "Service deleted.")
+            return redirect('adminapp:service_list')
+
+        # Update
+        elif 'update_service' in request.POST:
+            service = get_object_or_404(ServiceType, id=service_id)
+            service.name = request.POST.get('name')
+            service.description = request.POST.get('description')
+            service.base_hourly_rate = request.POST.get('base_hourly_rate')
+            service.save()
+            messages.success(request, "Service updated.")
+            return redirect('adminapp:service_list')
+
     return render(request, 'adminapp/service_list.html', {'services': services})
