@@ -423,8 +423,8 @@ class UserLoginView(APIView):
             return Response({'error': 'No user found with this phone number'}, status=status.HTTP_404_NOT_FOUND)
         
         # Check if this is a partner trying to use the user login
-        if user.is_partner and not isinstance(user, Partner):
-            return Response({'error': 'Please use partner login'}, status=status.HTTP_400_BAD_REQUEST)
+        # if user.is_partner and not isinstance(user, Partner):
+        #     return Response({'error': 'Please use partner login'}, status=status.HTTP_400_BAD_REQUEST)
             
         retry_count = cache.get(f'otp_retry_{phone_number}', 0)
         if retry_count >= 3:

@@ -8,6 +8,15 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.utils import timezone
 
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.utils import timezone
+from django.db.models import Q
+from datetime import datetime
+
+
 from authentication.serializers import BookingDetailSerializer, BookingExtensionSerializer, BookingRequestSerializer, ReviewSerializer, ServiceTypeSerializer
 from authentication.models import (
     CustomUser, Partner, ServiceType, Booking, 
@@ -227,6 +236,60 @@ class BookSlotView(APIView):
             "created": created_slots,
             "failed": failed_slots
         }, status=201 if created_slots else 400)
+
+
+
+
+class BookedSlotsView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not request.user.is_partner:
+            return Response({"error": "Only partners allowed."}, status=403)
+
+        try:
+            partner = Partner.objects.get(id=request.user.id)
+        except Partner.DoesNotExist:
+            return Response({"error": "Partner not found"}, status=404)
+
+        if not partner.is_verified:
+            return Response({"error": "Partner not verified."}, status=403)
+
+        now = timezone.localtime()
+        today = now.date()
+        current_time = now.time()
+
+        # Currently running: start_time <= now <= end_time
+        currently_active_slots = PartnerSlot.objects.filter(
+            partner=partner,
+            date=today,
+            start_time__lte=current_time,
+            end_time__gt=current_time,
+            is_active=True
+        ).order_by('start_time')
+
+        # Future slots: date > today OR (date == today AND start_time > now)
+        future_slots = PartnerSlot.objects.filter(
+            partner=partner,
+            is_active=True
+        ).filter(
+            Q(date__gt=today) |
+            Q(date=today, start_time__gt=current_time)
+        ).order_by('date', 'start_time')
+
+        def format_slot(slot):
+            return {
+                "date": slot.date.strftime('%Y-%m-%d'),
+                "start_time": slot.start_time.strftime('%H:%M'),
+                "end_time": slot.end_time.strftime('%H:%M')
+            }
+
+        return Response({
+            "currently_active": [format_slot(slot) for slot in currently_active_slots],
+            "upcoming": [format_slot(slot) for slot in future_slots]
+        })
+
 
 
 

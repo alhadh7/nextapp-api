@@ -198,6 +198,27 @@
                     }
                 },
                 {
+                    "name": "View Booked Slots",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{access_token}}"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/partner/booked-slots/",
+                            "host": ["{{base_url}}"],
+                            "path": ["partner", "booked-slots"]
+                        }
+                    }
+                },
+                {
                     "name": "Get Available Bookings",
                     "request": {
                         "method": "GET",
