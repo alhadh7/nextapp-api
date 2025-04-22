@@ -1,0 +1,79 @@
+<!-- adminapp/templates/adminapp/partner_list.html -->
+{% extends 'adminapp/base.html' %}
+
+{% block title %}Partners - Health Connect Admin{% endblock %}
+
+{% block header %}Partners{% endblock %}
+
+{% block content %}
+<div class="mb-4 flex justify-between items-center">
+    <h2 class="text-xl font-semibold">All Partners</h2>
+    <!-- Add partner button can be added later -->
+</div>
+
+<div class="overflow-x-auto">
+    <table class="min-w-full bg-white">
+        <thead>
+            <tr>
+                <th class="py-2 px-4 border-b text-left">ID</th>
+                <th class="py-2 px-4 border-b text-left">Name</th>
+                <th class="py-2 px-4 border-b text-left">Phone</th>
+                <th class="py-2 px-4 border-b text-left">Education</th>
+                <th class="py-2 px-4 border-b text-left">Verified</th>
+                <th class="py-2 px-4 border-b text-left">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for partner in page_obj %}
+            <tr>
+                <td class="py-2 px-4 border-b">{{ partner.id }}</td>
+                <td class="py-2 px-4 border-b">{{ partner.full_name }}</td>
+                <td class="py-2 px-4 border-b">{{ partner.phone_number }}</td>
+                <td class="py-2 px-4 border-b">{{ partner.education }}</td>
+                <td class="py-2 px-4 border-b">
+                    {% if partner.is_verified %}
+                    <span class="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">Verified</span>
+                    {% else %}
+                    <span class="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">Pending</span>
+                    {% endif %}
+                </td>
+                <td class="py-2 px-4 border-b">
+                    <a href="#" class="text-blue-500 hover:underline mr-2">View</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="py-4 text-center text-gray-500">No partners found</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div class="flex justify-center mt-6">
+    <div class="inline-flex">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}" class="px-4 py-2 text-sm border rounded-l-md hover:bg-gray-100">Previous</a>
+        {% else %}
+        <span class="px-4 py-2 text-sm border rounded-l-md text-gray-400 bg-gray-50 cursor-not-allowed">Previous</span>
+        {% endif %}
+        
+        {% for i in page_obj.paginator.page_range %}
+            {% if page_obj.number == i %}
+            <span class="px-4 py-2 text-sm border bg-blue-50 text-blue-600">{{ i }}</span>
+            {% else %}
+            <a href="?page={{ i }}" class="px-4 py-2 text-sm border hover:bg-gray-100">{{ i }}</a>
+            {% endif %}
+        {% endfor %}
+        
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="px-4 py-2 text-sm border rounded-r-md hover:bg-gray-100">Next</a>
+        {% else %}
+        <span class="px-4 py-2 text-sm border rounded-r-md text-gray-400 bg-gray-50 cursor-not-allowed">Next</span>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
