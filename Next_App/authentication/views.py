@@ -95,13 +95,26 @@ def verify_otp_via_whatsapp(phone_number, verification_id, code):
 # Get JWT tokens for a user
 from rest_framework_simplejwt.tokens import RefreshToken
 
-def get_tokens_for_user(user):
+# def get_tokens_for_user(user):
+#     refresh = RefreshToken.for_user(user)
+
+#     refresh['phone_number'] = user.phone_number
+#     refresh['is_partner'] = user.is_partner
+
+
+#     return {
+#         'refresh': str(refresh),
+#         'access': str(refresh.access_token),
+#     }
+
+
+def get_tokens_for_user(user, is_partner=False):
     refresh = RefreshToken.for_user(user)
-
+    
+    # Add custom claims to the token
     refresh['phone_number'] = user.phone_number
-    refresh['is_partner'] = user.is_partner
-
-
+    refresh['is_partner'] = is_partner  # Use the provided is_partner value
+    
     return {
         'refresh': str(refresh),
         'access': str(refresh.access_token),
@@ -196,7 +209,7 @@ class VerifyUserView(APIView):
             cache.delete(f'otp_retry_{phone_number}')
             
             # Generate JWT tokens
-            tokens = get_tokens_for_user(user)
+            tokens = get_tokens_for_user(user , is_partner = False)
             
             return Response(tokens, status=status.HTTP_200_OK)
 
@@ -381,15 +394,17 @@ class VerifyPartnerView(APIView):
                             partner.medical_certificate.save(filename, File(f), save=True)
                         default_storage.delete(medical_certificate_ref)
                 
-                user_to_token = partner
+                # user_to_token = partner
             
             # Clean up cache
             cache.delete(f'partner_data_{phone_number}_{verification_id}')
             cache.delete(f'otp_retry_{phone_number}')
             
             # Generate JWT tokens
-            tokens = get_tokens_for_user(user_to_token)
-            
+            # tokens = get_tokens_for_user(user_to_token)
+
+            tokens = get_tokens_for_user(partner , is_partner = True)
+
             return Response(tokens, status=status.HTTP_200_OK)
 
         # Handle different response codes
@@ -480,7 +495,7 @@ class VerifyUserLoginView(APIView):
                 cache.delete(f'otp_retry_{phone_number}')
                 
                 # Generate JWT tokens
-                tokens = get_tokens_for_user(user)
+                tokens = get_tokens_for_user(user , is_partner = False)
                 
                 return Response(tokens, status=status.HTTP_200_OK)
             except CustomUser.DoesNotExist:
@@ -570,7 +585,7 @@ class VerifyPartnerLoginView(APIView):
                 cache.delete(f'otp_retry_{phone_number}')
                 
                 # Generate JWT tokens
-                tokens = get_tokens_for_user(partner)
+                tokens = get_tokens_for_user(partner , is_partner = True)
                 
                 return Response(tokens, status=status.HTTP_200_OK)
             except Partner.DoesNotExist:
