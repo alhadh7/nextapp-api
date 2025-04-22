@@ -347,6 +347,9 @@ class VerifyPartnerView(APIView):
                         is_partner=True
                     )
                     
+                    # Set a default hashed password
+                    partner.set_password("defaultpassword123")  # Change this to a secure value
+
                     # Handle medical certificate
                     if medical_certificate_ref:
                         from django.core.files.storage import default_storage
