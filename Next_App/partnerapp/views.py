@@ -30,9 +30,10 @@ class PartnerHomeView(APIView):
     
     def get(self, request):
         # Check if the user is a partner
-        if not request.user.is_partner:
+        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        if not is_partner:
             return Response({
-                "error": "Access denied. Only partners can view this page."
+                "error": "Access denied. Only partners logged in via the partner app can view this page."
             }, status=status.HTTP_403_FORBIDDEN)
         
         # Query the Partner model if the user is a partner
@@ -71,10 +72,15 @@ class BookingHistoryView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        if user.is_partner:
+
+        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        
+        if is_partner:
+            print('is partner')
             # Partner's booking history
             return Booking.objects.filter(partner=user, status__in=['completed', 'cancelled']).order_by('-created_at')
         else:
+            print('is user')
             # User's booking history
             return Booking.objects.filter(user=user, status__in=['completed', 'cancelled']).order_by('-created_at')
 
@@ -85,8 +91,12 @@ class BookingDetailView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request, booking_id):
+
+        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+
         # Handle both user and partner access
-        if request.user.is_partner:
+        if is_partner:
+
             # Partner can only view bookings assigned to them
             booking = get_object_or_404(
                 Booking, 
@@ -118,8 +128,11 @@ class BookSlotView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        if not request.user.is_partner:
-            return Response({"error": "Only partners allowed."}, status=403)
+        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        if not is_partner:
+            return Response({
+                "error": "Access denied. Only partners logged in via the partner app can book slots."
+            }, status=status.HTTP_403_FORBIDDEN)
 
         try:
             partner = Partner.objects.get(id=request.user.id)
@@ -173,8 +186,11 @@ class BookSlotView(APIView):
         })
 
     def post(self, request):
-        if not request.user.is_partner:
-            return Response({"error": "Only partners allowed."}, status=403)
+        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        if not is_partner:
+            return Response({
+                "error": "Access denied. Only partners logged in via the partner app can book slots."
+            }, status=status.HTTP_403_FORBIDDEN)
 
         try:
             partner = Partner.objects.get(id=request.user.id)
@@ -245,8 +261,11 @@ class BookedSlotsView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        if not request.user.is_partner:
-            return Response({"error": "Only partners allowed."}, status=403)
+        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        if not is_partner:
+            return Response({
+                "error": "Access denied. Only partners logged in via the partner app can view this page."
+            }, status=status.HTTP_403_FORBIDDEN)
 
         try:
             partner = Partner.objects.get(id=request.user.id)
@@ -299,9 +318,10 @@ class AvailableBookingsView(APIView):
     
     def get(self, request):
         # Check if user is a verified partner
-        if not request.user.is_partner:
+        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        if not is_partner:
             return Response({
-                "error": "Access denied. Only partners can view available bookings."
+                "error": "Access denied. Only partners logged in via the partner app can view this page."
             }, status=status.HTTP_403_FORBIDDEN)
         
         try:
@@ -405,9 +425,10 @@ class AcceptBookingView(APIView):
     
     def post(self, request, booking_id):
         # Check if user is a verified partner
-        if not request.user.is_partner:
+        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        if not is_partner:
             return Response({
-                "error": "Access denied. Only partners can accept bookings."
+                "error": "Access denied. Only partners logged in via the partner app can view this page."
             }, status=status.HTTP_403_FORBIDDEN)
         
         try:
@@ -479,9 +500,10 @@ class PartnerActiveBookingsView(APIView):
     
     def get(self, request):
         # Check if user is a verified partner
-        if not request.user.is_partner:
+        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        if not is_partner:
             return Response({
-                "error": "Access denied. Only partners can view active bookings."
+                "error": "Access denied. Only partners logged in via the partner app can view this page."
             }, status=status.HTTP_403_FORBIDDEN)
         
         try:
@@ -514,9 +536,10 @@ class ToggleWorkStatusView(APIView):
     
     def post(self, request, booking_id):
         # Check if user is a verified partner
-        if not request.user.is_partner:
+        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        if not is_partner:
             return Response({
-                "error": "Access denied. Only partners can toggle work status."
+                "error": "Access denied. Only partners logged in via the partner app can view this page."
             }, status=status.HTTP_403_FORBIDDEN)
         
         try:
@@ -589,9 +612,10 @@ class RespondToExtensionRequestView(APIView):
     
     def post(self, request, extension_id):
         # Check if user is a verified partner
-        if not request.user.is_partner:
+        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        if not is_partner:
             return Response({
-                "error": "Access denied. Only partners can respond to extension requests."
+                "error": "Access denied. Only partners logged in via the partner app can view this page."
             }, status=status.HTTP_403_FORBIDDEN)
         
         try:
@@ -635,9 +659,10 @@ class PartnerCompletedBookingsView(APIView):
     
     def get(self, request):
         # Check if user is a verified partner
-        if not request.user.is_partner:
+        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        if not is_partner:
             return Response({
-                "error": "Access denied. Only partners can view completed bookings."
+                "error": "Access denied. Only partners logged in via the partner app can view this page."
             }, status=status.HTTP_403_FORBIDDEN)
         
         try:
@@ -667,9 +692,10 @@ class PartnerReviewsView(APIView):
     
     def get(self, request):
         # Check if user is a verified partner
-        if not request.user.is_partner:
+        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        if not is_partner:
             return Response({
-                "error": "Access denied. Only partners can view their reviews."
+                "error": "Access denied. Only partners logged in via the partner app can view this page."
             }, status=status.HTTP_403_FORBIDDEN)
         
         try:

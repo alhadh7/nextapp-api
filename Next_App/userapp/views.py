@@ -40,12 +40,23 @@ class BookingHistoryView(generics.ListAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
+
+    
     def get_queryset(self):
+
+
+
         user = self.request.user
-        if user.is_partner:
+        print(user.__dict__)
+
+        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        
+        if is_partner:
+            print('is partner')
             # Partner's booking history
             return Booking.objects.filter(partner=user, status__in=['completed', 'cancelled']).order_by('-created_at')
         else:
+            print('is user')
             # User's booking history
             return Booking.objects.filter(user=user, status__in=['completed', 'cancelled']).order_by('-created_at')
 
@@ -56,8 +67,12 @@ class BookingDetailView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request, booking_id):
+
+        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+
         # Handle both user and partner access
-        if request.user.is_partner:
+        if is_partner:
+
             # Partner can only view bookings assigned to them
             booking = get_object_or_404(
                 Booking, 
@@ -82,7 +97,10 @@ class CreateBookingView(APIView):
     
     def post(self, request):
         # Check if user is not a partner
-        if request.user.is_partner:
+
+
+        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        if is_partner:
             return Response({
                 "error": "Partners cannot make bookings."
             }, status=status.HTTP_403_FORBIDDEN)
@@ -437,9 +455,11 @@ class UserActiveBookingsView(APIView):
     permission_classes = [IsAuthenticated]
     
     def get(self, request):
-        if request.user.is_partner:
+
+        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        if is_partner:
             return Response({
-                "error": "Only users can access this endpoint."
+                "error": "Partners cannot see user bookings."
             }, status=status.HTTP_403_FORBIDDEN)
             
         # Active bookings are those that are confirmed, in progress, or scheduled for future
@@ -773,8 +793,17 @@ class RazorPayWebhookView(APIView):
 class CreateReviewView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    
+
+
+
     def post(self, request, booking_id):
+
+        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        if is_partner:
+            return Response({
+                "error": "Partners cannot create user reviews."
+            }, status=status.HTTP_403_FORBIDDEN)
+
         # Retrieve the booking object, ensure it is "completed"
         booking = get_object_or_404(
             Booking, 
