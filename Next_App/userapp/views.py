@@ -40,11 +40,7 @@ class BookingHistoryView(generics.ListAPIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
-
-    
     def get_queryset(self):
-
-
 
         user = self.request.user
         print(user.__dict__)
