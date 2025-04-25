@@ -1,4 +1,4 @@
-from datetime import timezone
+from django.utils import timezone
 from rest_framework import serializers
 from authentication.models import CustomUser, Partner, ServiceType, Booking, BookingRequest, BookingExtension, Review
 
