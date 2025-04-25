@@ -1,3 +1,4 @@
+from datetime import timezone
 from rest_framework import serializers
 from authentication.models import CustomUser, Partner, ServiceType, Booking, BookingRequest, BookingExtension, Review
 
@@ -59,6 +60,11 @@ class BookingCreateSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
         validated_data['user'] = user
         
+        if validated_data.get('is_instant', False):
+            validated_data['scheduled_date'] = timezone.localdate()
+            validated_data['scheduled_time'] = timezone.localtime().time()
+
+
         booking = Booking.objects.create(**validated_data)
         # Calculate the total amount
         booking.calculate_total_amount()
