@@ -87,115 +87,223 @@ class BookingDetailView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 # User views
-class CreateBookingView(APIView):
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+# class CreateBookingView(APIView):
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated]
     
-    def post(self, request):
-        # Check if user is not a partner
+#     def post(self, request):
+#         # Check if user is not a partner
 
 
-        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
-        if is_partner:
+#         is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+#         if is_partner:
+#             return Response({
+#                 "error": "Partners cannot make bookings."
+#             }, status=status.HTTP_403_FORBIDDEN)
+
+
+#         # Get booking date based on type
+#         booking_data = request.data
+#         is_instant = booking_data.get("is_instant", True)
+
+#         if is_instant:
+#             booking_day = timezone.localdate()
+#         else:
+#             scheduled_date = booking_data.get("scheduled_date")
+#             if not scheduled_date:
+#                 return Response({
+#                     "error": "Scheduled date is required for book later."
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+#             booking_day = scheduled_date
+
+#         # Check for existing same-day bookings by this user
+#         same_day_bookings = Booking.objects.filter(
+#             user=request.user,
+#             scheduled_date=booking_day
+#         )
+
+#         if same_day_bookings.count() >= 3:
+#             return Response({
+#                 "error": "You already have 3 bookings on this day."
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+#         if same_day_bookings.exists():
+#             if not all(b.status == 'completed' and b.work_ended_at for b in same_day_bookings):
+#                 return Response({
+#                     "error": "You already have a booking on this day that is not yet completed."
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+
+#         if is_instant:
+#             active_now = Booking.objects.filter(
+#                 user=request.user,
+#                 is_instant=True,
+#                 status__in=['pending', 'confirmed', 'in_progress']
+#             )
+#             if active_now.exists():
+#                 return Response({
+#                     "error": "You already have an active 'Book Now' booking in progress."
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # Check for active 'Book Now' bookings on the same day
+#         active_now = Booking.objects.filter(
+#             user=request.user,
+#             is_instant=True,
+#             status__in=['pending', 'confirmed', 'in_progress']
+#         )
+
+#         if active_now.exists():
+#             active_booking = active_now.first()
+#             if active_booking.scheduled_date == booking_day:
+#                 return Response({
+#                     "error": "You already have an active 'Book Now' booking on this day."
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+
+
+#         if not is_instant:
+#             scheduled_date = booking_data.get("scheduled_date")
+#             scheduled_time_str = booking_data.get("scheduled_time")
+#             hours = int(booking_data.get("hours", 0))
+
+#             if not scheduled_date or not scheduled_time_str:
+#                 return Response({
+#                     "error": "Both date and time are required for book later."
+#                 }, status=status.HTTP_400_BAD_REQUEST)
+
+#             scheduled_time = datetime.strptime(scheduled_time_str, "%H:%M").time()
+
+
+#             # Convert to datetime for range comparison
+#             start_datetime = datetime.combine(
+#                 datetime.strptime(scheduled_date, "%Y-%m-%d").date(),
+#                 scheduled_time
+#             )
+#             end_datetime = start_datetime + timedelta(hours=hours)
+
+#             overlapping_bookings = Booking.objects.filter(
+#                 user=request.user,
+#                 scheduled_date=scheduled_date,
+#                 scheduled_time__isnull=False,
+#             ).exclude(status='cancelled')
+
+#             for b in overlapping_bookings:
+#                 existing_start = datetime.combine(b.scheduled_date, b.scheduled_time)
+#                 existing_end = existing_start + timedelta(hours=b.hours)
+#                 if (start_datetime < existing_end) and (end_datetime > existing_start):
+#                     return Response({
+#                         "error": f"Booking overlaps with another scheduled from {existing_start.time()} to {existing_end.time()}."
+#                     }, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+#         serializer = BookingCreateSerializer(
+#             data=request.data, 
+#             context={'request': request}
+#         )
+        
+#         if serializer.is_valid():
+#             booking = serializer.save()
+            
+#             # Return booking with details
+#             detail_serializer = BookingDetailSerializer(booking)
+#             return Response(detail_serializer.data, status=status.HTTP_201_CREATED)
+        
+#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def post(self, request):
+    # Check if user is not a partner
+    is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+    if is_partner:
+        return Response({
+            "error": "Partners cannot make bookings."
+        }, status=status.HTTP_403_FORBIDDEN)
+
+    # Get booking data
+    booking_data = request.data
+    is_instant = booking_data.get("is_instant", True)
+
+    # Determine booking date
+    if is_instant:
+        booking_day = timezone.localdate()
+    else:
+        scheduled_date = booking_data.get("scheduled_date")
+        if not scheduled_date:
             return Response({
-                "error": "Partners cannot make bookings."
-            }, status=status.HTTP_403_FORBIDDEN)
+                "error": "Scheduled date is required for book later."
+            }, status=status.HTTP_400_BAD_REQUEST)
+        booking_day = scheduled_date
 
+    # Check total number of bookings on this day (max 3)
+    same_day_bookings = Booking.objects.filter(
+        user=request.user,
+        scheduled_date=booking_day
+    ).exclude(status='cancelled')
 
-        # Get booking date based on type
-        booking_data = request.data
-        is_instant = booking_data.get("is_instant", True)
+    if same_day_bookings.count() >= 3:
+        return Response({
+            "error": "You already have 3 bookings on this day."
+        }, status=status.HTTP_400_BAD_REQUEST)
 
-        if is_instant:
-            booking_day = timezone.localdate()
-        else:
-            scheduled_date = booking_data.get("scheduled_date")
-            if not scheduled_date:
-                return Response({
-                    "error": "Scheduled date is required for book later."
-                }, status=status.HTTP_400_BAD_REQUEST)
-            booking_day = scheduled_date
+    # Check if there's any incomplete booking on the same day
+    incomplete_bookings = same_day_bookings.exclude(
+        status='completed', 
+        work_ended_at__isnull=False
+    )
+    
+    if incomplete_bookings.exists():
+        return Response({
+            "error": "You need to complete your existing booking before making a new one on this day."
+        }, status=status.HTTP_400_BAD_REQUEST)
 
-        # Check for existing same-day bookings by this user
-        same_day_bookings = Booking.objects.filter(
-            user=request.user,
-            scheduled_date=booking_day
-        )
+    # Additional check for scheduled bookings (time overlap)
+    if not is_instant:
+        scheduled_time_str = booking_data.get("scheduled_time")
+        hours = int(booking_data.get("hours", 0))
 
-        if same_day_bookings.count() >= 3:
+        if not scheduled_time_str:
             return Response({
-                "error": "You already have 3 bookings on this day."
+                "error": "Time is required for scheduled bookings."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        if same_day_bookings.exists():
-            if not all(b.status == 'completed' and b.work_ended_at for b in same_day_bookings):
-                return Response({
-                    "error": "You already have a booking on this day that is not yet completed."
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-        if is_instant:
-            active_now = Booking.objects.filter(
-                user=request.user,
-                is_instant=True,
-                status__in=['pending', 'confirmed', 'in_progress']
-            )
-            if active_now.exists():
-                return Response({
-                    "error": "You already have an active 'Book Now' booking in progress."
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-        if not is_instant:
-            scheduled_date = booking_data.get("scheduled_date")
-            scheduled_time_str = booking_data.get("scheduled_time")
-            hours = int(booking_data.get("hours", 0))
-
-            if not scheduled_date or not scheduled_time_str:
-                return Response({
-                    "error": "Both date and time are required for book later."
-                }, status=status.HTTP_400_BAD_REQUEST)
-
-            scheduled_time = datetime.strptime(scheduled_time_str, "%H:%M").time()
-
-
-            # Convert to datetime for range comparison
-            start_datetime = datetime.combine(
-                datetime.strptime(scheduled_date, "%Y-%m-%d").date(),
-                scheduled_time
-            )
-            end_datetime = start_datetime + timedelta(hours=hours)
-
-            overlapping_bookings = Booking.objects.filter(
-                user=request.user,
-                scheduled_date=scheduled_date,
-                scheduled_time__isnull=False,
-            ).exclude(status='cancelled')
-
-            for b in overlapping_bookings:
-                existing_start = datetime.combine(b.scheduled_date, b.scheduled_time)
-                existing_end = existing_start + timedelta(hours=b.hours)
-                if (start_datetime < existing_end) and (end_datetime > existing_start):
-                    return Response({
-                        "error": f"Booking overlaps with another scheduled from {existing_start.time()} to {existing_end.time()}."
-                    }, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-        serializer = BookingCreateSerializer(
-            data=request.data, 
-            context={'request': request}
+        scheduled_time = datetime.strptime(scheduled_time_str, "%H:%M").time()
+        
+        # Convert to datetime for range comparison
+        start_datetime = datetime.combine(
+            datetime.strptime(booking_day, "%Y-%m-%d").date() if isinstance(booking_day, str) else booking_day,
+            scheduled_time
         )
-        
-        if serializer.is_valid():
-            booking = serializer.save()
-            
-            # Return booking with details
-            detail_serializer = BookingDetailSerializer(booking)
-            return Response(detail_serializer.data, status=status.HTTP_201_CREATED)
-        
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        end_datetime = start_datetime + timedelta(hours=hours)
 
+        # Time overlap check is unnecessary since we already confirmed no incomplete bookings exist
+        # But kept for data integrity (in case of race conditions)
+        overlapping_bookings = Booking.objects.filter(
+            user=request.user,
+            scheduled_date=booking_day,
+            scheduled_time__isnull=False,
+        ).exclude(status='cancelled')
+
+        for b in overlapping_bookings:
+            existing_start = datetime.combine(b.scheduled_date, b.scheduled_time)
+            existing_end = existing_start + timedelta(hours=b.hours)
+            if (start_datetime < existing_end) and (end_datetime > existing_start):
+                return Response({
+                    "error": f"Booking overlaps with another scheduled from {existing_start.time()} to {existing_end.time()}."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+    # Create the booking
+    serializer = BookingCreateSerializer(
+        data=request.data, 
+        context={'request': request}
+    )
+    
+    if serializer.is_valid():
+        booking = serializer.save()
+        
+        # Return booking with details
+        detail_serializer = BookingDetailSerializer(booking)
+        return Response(detail_serializer.data, status=status.HTTP_201_CREATED)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class CancelBookingView(APIView):

@@ -27,12 +27,10 @@ urlpatterns = [
     path('bookings/<int:booking_id>/process-payment/', views.ProcessPaymentView.as_view()),
 
     #cancel booking pay placeholder
-
     path('extensions/<int:extension_id>/create-order/', views.CreateExtensionOrderView.as_view()),
     path('extensions/<int:extension_id>/process-payment/', views.ProcessExtensionPaymentView.as_view()),
     
     #cancel extention pay placeholder
-
     path('bookings/active/', views.UserActiveBookingsView.as_view(), name='user-active-bookings'),
     path('bookings/<int:booking_id>/extension/', views.RequestBookingExtensionView.as_view(), name='request-extension'),
     path('bookings/<int:booking_id>/review/', views.CreateReviewView.as_view(), name='create-review'),

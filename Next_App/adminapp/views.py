@@ -585,6 +585,14 @@ def edit_booking(request, booking_id):
 
     return redirect('adminapp:booking_list')  # In case of a GET request, just redirect back
 
+@admin_required
+def delete_booking(request, booking_id):
+    """Delete a booking."""
+    booking = get_object_or_404(Booking, id=booking_id)
+    booking.delete()
+    return redirect('adminapp:booking_list')
+
+
 
 # @admin_required
 # def service_list(request):
