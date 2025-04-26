@@ -86,133 +86,11 @@ class BookingDetailView(APIView):
         serializer = BookingDetailSerializer(booking)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-# User views
-# class CreateBookingView(APIView):
-#     authentication_classes = [JWTAuthentication]
-#     permission_classes = [IsAuthenticated]
-    
-#     def post(self, request):
-#         # Check if user is not a partner
-
-
-#         is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
-#         if is_partner:
-#             return Response({
-#                 "error": "Partners cannot make bookings."
-#             }, status=status.HTTP_403_FORBIDDEN)
-
-
-#         # Get booking date based on type
-#         booking_data = request.data
-#         is_instant = booking_data.get("is_instant", True)
-
-#         if is_instant:
-#             booking_day = timezone.localdate()
-#         else:
-#             scheduled_date = booking_data.get("scheduled_date")
-#             if not scheduled_date:
-#                 return Response({
-#                     "error": "Scheduled date is required for book later."
-#                 }, status=status.HTTP_400_BAD_REQUEST)
-#             booking_day = scheduled_date
-
-#         # Check for existing same-day bookings by this user
-#         same_day_bookings = Booking.objects.filter(
-#             user=request.user,
-#             scheduled_date=booking_day
-#         )
-
-#         if same_day_bookings.count() >= 3:
-#             return Response({
-#                 "error": "You already have 3 bookings on this day."
-#             }, status=status.HTTP_400_BAD_REQUEST)
-
-#         if same_day_bookings.exists():
-#             if not all(b.status == 'completed' and b.work_ended_at for b in same_day_bookings):
-#                 return Response({
-#                     "error": "You already have a booking on this day that is not yet completed."
-#                 }, status=status.HTTP_400_BAD_REQUEST)
-
-#         if is_instant:
-#             active_now = Booking.objects.filter(
-#                 user=request.user,
-#                 is_instant=True,
-#                 status__in=['pending', 'confirmed', 'in_progress']
-#             )
-#             if active_now.exists():
-#                 return Response({
-#                     "error": "You already have an active 'Book Now' booking in progress."
-#                 }, status=status.HTTP_400_BAD_REQUEST)
-
-#         # Check for active 'Book Now' bookings on the same day
-#         active_now = Booking.objects.filter(
-#             user=request.user,
-#             is_instant=True,
-#             status__in=['pending', 'confirmed', 'in_progress']
-#         )
-
-#         if active_now.exists():
-#             active_booking = active_now.first()
-#             if active_booking.scheduled_date == booking_day:
-#                 return Response({
-#                     "error": "You already have an active 'Book Now' booking on this day."
-#                 }, status=status.HTTP_400_BAD_REQUEST)
-
-
-#         if not is_instant:
-#             scheduled_date = booking_data.get("scheduled_date")
-#             scheduled_time_str = booking_data.get("scheduled_time")
-#             hours = int(booking_data.get("hours", 0))
-
-#             if not scheduled_date or not scheduled_time_str:
-#                 return Response({
-#                     "error": "Both date and time are required for book later."
-#                 }, status=status.HTTP_400_BAD_REQUEST)
-
-#             scheduled_time = datetime.strptime(scheduled_time_str, "%H:%M").time()
-
-
-#             # Convert to datetime for range comparison
-#             start_datetime = datetime.combine(
-#                 datetime.strptime(scheduled_date, "%Y-%m-%d").date(),
-#                 scheduled_time
-#             )
-#             end_datetime = start_datetime + timedelta(hours=hours)
-
-#             overlapping_bookings = Booking.objects.filter(
-#                 user=request.user,
-#                 scheduled_date=scheduled_date,
-#                 scheduled_time__isnull=False,
-#             ).exclude(status='cancelled')
-
-#             for b in overlapping_bookings:
-#                 existing_start = datetime.combine(b.scheduled_date, b.scheduled_time)
-#                 existing_end = existing_start + timedelta(hours=b.hours)
-#                 if (start_datetime < existing_end) and (end_datetime > existing_start):
-#                     return Response({
-#                         "error": f"Booking overlaps with another scheduled from {existing_start.time()} to {existing_end.time()}."
-#                     }, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-#         serializer = BookingCreateSerializer(
-#             data=request.data, 
-#             context={'request': request}
-#         )
-        
-#         if serializer.is_valid():
-#             booking = serializer.save()
-            
-#             # Return booking with details
-#             detail_serializer = BookingDetailSerializer(booking)
-#             return Response(detail_serializer.data, status=status.HTTP_201_CREATED)
-        
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CreateBookingView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    
+
     def post(self, request):
         # Check if user is not a partner
         is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
@@ -344,6 +222,42 @@ class PendingBookingListView(generics.ListAPIView):
         ).order_by('-created_at')
 
 
+# class BookingAvailablePartnersView(APIView):
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated]
+    
+#     def get(self, request, booking_id):
+#         booking = get_object_or_404(Booking, id=booking_id, user=request.user)
+
+#         # Auto-cancel if expired and unassigned
+#         if (
+#             booking.status == 'pending' and
+#             booking.partner is None and
+#             timezone.now() - booking.created_at > timedelta(minutes=30)
+#         ):
+#             booking.status = 'cancelled'
+#             booking.save()
+#             return Response({
+#                 "error": "Booking auto-cancelled due to no available partners after 30 minutes."
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
+
+#         # Get partners who have already accepted this booking
+#         partners = Partner.objects.filter(
+#             booking_requests__booking=booking,
+#             booking_requests__status='accepted',
+#             is_verified=True
+#         )
+        
+#         # Filter partners based on verification and experience
+#         if booking.partner_type == 'trained':
+#             partners = partners.filter(experience__gte=2)
+#         else:
+#             partners = partners.filter(experience__lt=2)
+        
+#         serializer = PartnerSerializer(partners, many=True)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
 class BookingAvailablePartnersView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -359,26 +273,37 @@ class BookingAvailablePartnersView(APIView):
         ):
             booking.status = 'cancelled'
             booking.save()
+            print("Booking auto-cancelled due to timeout.")
             return Response({
                 "error": "Booking auto-cancelled due to no available partners after 30 minutes."
             }, status=status.HTTP_400_BAD_REQUEST)
 
+        print(f"Booking ID: {booking.id}, Partner Type: {booking.partner_type}")
 
-        # Get partners who have already accepted this booking
-        partners = Partner.objects.filter(
+        # Step 1: Partners who accepted the booking
+        accepted_partners = Partner.objects.filter(
             booking_requests__booking=booking,
-            booking_requests__status='accepted',
-            is_verified=True
+            booking_requests__status='accepted'
         )
-        
-        # Filter partners based on verification and experience
+        print(f"Accepted partners count: {accepted_partners.count()}")
+
+        # Step 2: Only verified partners
+        verified_partners = accepted_partners.filter(is_verified=True)
+        print(f"Verified accepted partners count: {verified_partners.count()}")
+
+        # Step 3: Filter by experience based on partner_type
         if booking.partner_type == 'trained':
-            partners = partners.filter(experience__gte=2)
+            final_partners = verified_partners.filter(experience__gte=2)
+            print("Filtering for trained partners with experience >= 2")
         else:
-            partners = partners.filter(experience__lt=2)
-        
-        serializer = PartnerSerializer(partners, many=True)
+            final_partners = verified_partners.filter(experience__lt=2)
+            print("Filtering for untrained partners with experience < 2")
+
+        print(f"Final partners count after filtering: {final_partners.count()}")
+
+        serializer = PartnerSerializer(final_partners, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class SelectPartnerView(APIView):
     authentication_classes = [JWTAuthentication]
