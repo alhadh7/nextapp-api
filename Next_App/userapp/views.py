@@ -258,6 +258,10 @@ class PendingBookingListView(generics.ListAPIView):
 #         serializer = PartnerSerializer(partners, many=True)
 #         return Response(serializer.data, status=status.HTTP_200_OK)
 
+from django.db.models import IntegerField
+from django.db.models.functions import Cast
+
+
 class BookingAvailablePartnersView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -291,12 +295,17 @@ class BookingAvailablePartnersView(APIView):
         verified_partners = accepted_partners.filter(is_verified=True)
         print(f"Verified accepted partners count: {verified_partners.count()}")
 
-        # Step 3: Filter by experience based on partner_type
+        # Step 3: Cast experience to Integer for proper filtering
+        verified_partners = verified_partners.annotate(
+            experience_int=Cast('experience', IntegerField())
+        )
+
+        # Step 4: Filter by experience based on partner_type
         if booking.partner_type == 'trained':
-            final_partners = verified_partners.filter(experience__gte=2)
+            final_partners = verified_partners.filter(experience_int__gte=2)
             print("Filtering for trained partners with experience >= 2")
         else:
-            final_partners = verified_partners.filter(experience__lt=2)
+            final_partners = verified_partners.filter(experience_int__lt=2)
             print("Filtering for untrained partners with experience < 2")
 
         print(f"Final partners count after filtering: {final_partners.count()}")
