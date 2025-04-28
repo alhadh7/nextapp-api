@@ -404,8 +404,12 @@ class CreateBookingOrderView(APIView):
                 'order_id': razorpay_order['id'],
                 'amount': order_amount / 100,  # Convert back to rupees for display
                 'currency': order_currency,
-                'booking_id': booking.id
-            }, status=status.HTTP_200_OK)
+                'booking_id': booking.id,
+                'name': request.user.full_name,
+                'email': request.user.email,
+                'contact': request.user.phone_number
+                }
+            , status=status.HTTP_200_OK)
             
         except Exception as e:
             return Response({

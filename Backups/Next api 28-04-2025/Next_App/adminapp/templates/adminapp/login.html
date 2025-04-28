@@ -1,0 +1,36 @@
+<!-- adminapp/templates/adminapp/login.html -->
+{% extends 'adminapp/base.html' %}
+
+{% block title %}Login - Health Connect Admin{% endblock %}
+
+{% block auth_content %}
+<div class="w-full max-w-md">
+    <div class="bg-white p-8 rounded shadow">
+        <h2 class="text-2xl font-bold mb-6 text-center">Admin Login</h2>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="mb-4">
+                <label for="id_phone_number" class="block text-gray-700 text-sm font-bold mb-2">Phone Number</label>
+                <input type="text" name="phone_number" id="id_phone_number" required 
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                       placeholder="Enter your phone number">
+            </div>
+            
+            <div class="mb-6">
+                <label for="id_password" class="block text-gray-700 text-sm font-bold mb-2">Password</label>
+                <input type="password" name="password" id="id_password" required 
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                       placeholder="Enter your password">
+            </div>
+            
+            <div class="flex items-center justify-between">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
+                    Login
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

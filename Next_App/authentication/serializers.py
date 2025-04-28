@@ -89,6 +89,7 @@ class BookingRequestSerializer(serializers.ModelSerializer):
         fields = ['id', 'booking', 'partner', 'status', 'created_at']
         read_only_fields = ['id', 'created_at']
 
+
 # class BookingExtensionSerializer(serializers.ModelSerializer):
 #     class Meta:
 #         model = BookingExtension

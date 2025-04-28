@@ -66,9 +66,6 @@ class CustomUser(AbstractBaseUser):
         # Implement more checks if needed for other roles
         return False
 
-
-
-
     def __str__(self):
         return f"{self.full_name} {self.phone_number} "
 

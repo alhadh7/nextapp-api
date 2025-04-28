@@ -1,0 +1,104 @@
+<!-- adminapp/templates/adminapp/dashboard.html -->
+{% extends 'adminapp/base.html' %}
+
+{% block title %}Dashboard - Health Connect Admin{% endblock %}
+
+{% block header %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+    <!-- Users card -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="rounded-full bg-blue-100 p-3">
+                <i class="fas fa-users text-blue-500"></i>
+            </div>
+            <div class="ml-4">
+                <h3 class="text-gray-500 text-sm">Total Users</h3>
+                <p class="text-2xl font-bold">{{ user_count }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Partners card -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="rounded-full bg-green-100 p-3">
+                <i class="fas fa-user-md text-green-500"></i>
+            </div>
+            <div class="ml-4">
+                <h3 class="text-gray-500 text-sm">Partners</h3>
+                <p class="text-2xl font-bold">{{ partner_count }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bookings card -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="rounded-full bg-purple-100 p-3">
+                <i class="fas fa-calendar-check text-purple-500"></i>
+            </div>
+            <div class="ml-4">
+                <h3 class="text-gray-500 text-sm">Bookings</h3>
+                <p class="text-2xl font-bold">{{ booking_count }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Services card -->
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="flex items-center">
+            <div class="rounded-full bg-yellow-100 p-3">
+                <i class="fas fa-concierge-bell text-yellow-500"></i>
+            </div>
+            <div class="ml-4">
+                <h3 class="text-gray-500 text-sm">Services</h3>
+                <p class="text-2xl font-bold">{{ service_count }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="bg-white rounded-lg shadow p-6">
+    <h3 class="text-lg font-semibold mb-4">Recent Bookings</h3>
+    
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white">
+            <thead>
+                <tr>
+                    <th class="py-2 px-4 border-b text-left">ID</th>
+                    <th class="py-2 px-4 border-b text-left">User</th>
+                    <th class="py-2 px-4 border-b text-left">Service</th>
+                    <th class="py-2 px-4 border-b text-left">Status</th>
+                    <th class="py-2 px-4 border-b text-left">Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in latest_bookings %}
+                <tr>
+                    <td class="py-2 px-4 border-b">{{ booking.id }}</td>
+                    <td class="py-2 px-4 border-b">{{ booking.user.full_name }}</td>
+                    <td class="py-2 px-4 border-b">{{ booking.service_type }}</td>
+                    <td class="py-2 px-4 border-b">
+                        <span class="px-2 py-1 rounded-full text-xs 
+                            {% if booking.status == 'completed' %}bg-green-100 text-green-800
+                            {% elif booking.status == 'cancelled' %}bg-red-100 text-red-800
+                            {% elif booking.status == 'confirmed' %}bg-blue-100 text-blue-800
+                            {% elif booking.status == 'in_progress' %}bg-yellow-100 text-yellow-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ booking.status|title }}
+                        </span>
+                    </td>
+                    <td class="py-2 px-4 border-b">{{ booking.created_at|date:"M d, Y" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="py-4 text-center text-gray-500">No bookings found</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
