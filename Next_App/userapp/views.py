@@ -378,7 +378,7 @@ class CreateBookingOrderView(APIView):
         
         # Create RazorPay order
         try:
-            order_amount = int(booking.total_amount * 100)  # Amount in paise
+            order_amount = str(booking.total_amount * 100)  # Amount in paise
             order_currency = 'INR'
             order_receipt = f"booking_{booking.id}"
             notes = {'booking_id': str(booking.id)}
@@ -413,13 +413,97 @@ class CreateBookingOrderView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
+# from decimal import Decimal
+# import razorpay
+# from django.conf import settings
+
+# # Initialize Razorpay client
+# razorpay_client = razorpay.Client(
+#     auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+# class ProcessPaymentView(APIView):
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated]
+    
+#     def post(self, request, booking_id):
+#         booking = get_object_or_404(
+#             Booking, 
+#             id=booking_id, 
+#             user=request.user,
+#             status='confirmed',
+#             payment_status='pending'
+#         )
+        
+#         razorpay_payment_id = request.data.get('razorpay_payment_id')
+#         razorpay_order_id = request.data.get('razorpay_order_id')
+        
+#         # Find the related transaction
+#         try:
+#             transaction = Transaction.objects.get(
+#                 booking=booking,
+#                 razorpay_order_id=razorpay_order_id
+#             )
+#         except Transaction.DoesNotExist:
+#             return Response({
+#                 "error": "Transaction not found"
+#             }, status=status.HTTP_400_BAD_REQUEST)
+        
+#         # Handle payment success
+#         if  razorpay_payment_id:
+#             # Update booking payment status
+#             booking.payment_status = 'paid'
+#             booking.save()
+            
+#             # Update transaction
+#             transaction.razorpay_payment_id = razorpay_payment_id
+#             transaction.status = 'completed'
+#             transaction.save()
+             
+#             # Update partner wallet (if applicable)
+#             if booking.partner:
+#                 partner_amount = booking.total_amount * Decimal('0.75')
+#                 wallet, created = PartnerWallet.objects.get_or_create(partner=booking.partner)
+#                 wallet.balance += partner_amount
+#                 wallet.save()
+            
+#             return Response({
+#                 "message": "Payment processed successfully",
+#                 "booking_id": booking.id,
+#                 "amount": booking.total_amount,
+#                 "razorpay_payment_id": razorpay_payment_id
+#             }, status=status.HTTP_200_OK)
+        
+#         # Handle payment failure
+#         else:
+#             # Update booking payment status
+#             booking.payment_status = 'failed'
+#             booking.save()
+            
+#             # Update transaction
+#             transaction.status = 'failed'
+#             if razorpay_payment_id:
+#                 transaction.razorpay_payment_id = razorpay_payment_id
+#             transaction.save()
+            
+#             return Response({
+#                 "error": "Payment failed",
+#                 "booking_id": booking.id
+#             }, status=status.HTTP_400_BAD_REQUEST)
+
 from decimal import Decimal
 import razorpay
 from django.conf import settings
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.shortcuts import get_object_or_404
 
 # Initialize Razorpay client
 razorpay_client = razorpay.Client(
-    auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+    auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
+)
 
 class ProcessPaymentView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -436,7 +520,8 @@ class ProcessPaymentView(APIView):
         
         razorpay_payment_id = request.data.get('razorpay_payment_id')
         razorpay_order_id = request.data.get('razorpay_order_id')
-        
+        razorpay_signature = request.data.get('razorpay_signature')
+
         # Find the related transaction
         try:
             transaction = Transaction.objects.get(
@@ -449,12 +534,33 @@ class ProcessPaymentView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
         
         # Handle payment success
-        if  razorpay_payment_id:
-            # Update booking payment status
+        if razorpay_payment_id and razorpay_signature:
+            # Verify payment signature
+            params_dict = {
+                'razorpay_order_id': razorpay_order_id,
+                'razorpay_payment_id': razorpay_payment_id,
+                'razorpay_signature': razorpay_signature
+            }
+            try:
+                razorpay_client.utility.verify_payment_signature(params_dict)
+            except razorpay.errors.SignatureVerificationError:
+                # Signature verification failed
+                booking.payment_status = 'failed'
+                booking.save()
+
+                transaction.status = 'failed'
+                transaction.razorpay_payment_id = razorpay_payment_id
+                transaction.save()
+
+                return Response({
+                    "error": "Payment signature verification failed",
+                    "booking_id": booking.id
+                }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Signature verified successfully
             booking.payment_status = 'paid'
             booking.save()
             
-            # Update transaction
             transaction.razorpay_payment_id = razorpay_payment_id
             transaction.status = 'completed'
             transaction.save()
@@ -473,13 +579,11 @@ class ProcessPaymentView(APIView):
                 "razorpay_payment_id": razorpay_payment_id
             }, status=status.HTTP_200_OK)
         
-        # Handle payment failure
+        # Handle missing fields or failure
         else:
-            # Update booking payment status
             booking.payment_status = 'failed'
             booking.save()
             
-            # Update transaction
             transaction.status = 'failed'
             if razorpay_payment_id:
                 transaction.razorpay_payment_id = razorpay_payment_id
@@ -489,6 +593,7 @@ class ProcessPaymentView(APIView):
                 "error": "Payment failed",
                 "booking_id": booking.id
             }, status=status.HTTP_400_BAD_REQUEST)
+
 
 
 class UserActiveBookingsView(APIView):
