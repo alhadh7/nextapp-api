@@ -378,7 +378,7 @@ class CreateBookingOrderView(APIView):
         
         # Create RazorPay order
         try:
-            order_amount = str(booking.total_amount * 100)  # Amount in paise
+            order_amount = int(booking.total_amount * 100)  # Amount in paise
             order_currency = 'INR'
             order_receipt = f"booking_{booking.id}"
             notes = {'booking_id': str(booking.id)}
