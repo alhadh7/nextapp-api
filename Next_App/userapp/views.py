@@ -726,7 +726,10 @@ class CreateExtensionOrderView(APIView):
                 'amount': order_amount / 100,  # Convert back to rupees for display
                 'currency': order_currency,
                 'extension_id': extension.id,
-                'booking_id': extension.booking.id
+                'booking_id': extension.booking.id,
+                'name': request.user.full_name,
+                'email': request.user.email,
+                'contact': request.user.phone_number
             }, status=status.HTTP_200_OK)
             
         except Exception as e:
@@ -839,23 +842,127 @@ class ProcessExtensionPaymentView(APIView):
 #         }, status=status.HTTP_200_OK)
 
 
+# class RazorPayWebhookView(APIView):
+#     # No authentication for webhooks coming from RazorPay
+    
+#     def post(self, request):
+#         # Get webhook data
+#         webhook_secret = settings.RAZORPAY_WEBHOOK_SECRET
+#         webhook_signature = request.headers.get('X-Razorpay-Signature')
+        
+#         # Verify webhook signature
+#         try:
+#             # Verify webhook signature
+#             razorpay_client.utility.verify_webhook_signature(
+#                 request.body.decode('utf-8'), 
+#                 webhook_signature, 
+#                 webhook_secret
+#             )
+#         except Exception as e:
+#             return Response({
+#                 'error': 'Invalid webhook signature'
+#             }, status=status.HTTP_400_BAD_REQUEST)
+            
+#         # Process webhook data
+#         webhook_data = request.data
+#         event = webhook_data.get('event')
+        
+#         if event == 'payment.authorized':
+#             # Payment was successful
+#             payment_id = webhook_data['payload']['payment']['entity']['id']
+#             order_id = webhook_data['payload']['payment']['entity']['order_id']
+            
+#             # Find related transaction
+#             try:
+#                 transaction = Transaction.objects.get(razorpay_order_id=order_id)
+                
+#                 # Update transaction
+#                 transaction.razorpay_payment_id = payment_id
+#                 transaction.status = 'completed'
+#                 transaction.save()
+                
+#                 # Update booking or extension
+#                 if transaction.booking:
+#                     booking = transaction.booking
+#                     booking.payment_status = 'paid'
+#                     booking.save()
+                    
+#                     # Update partner wallet
+#                     if booking.partner:
+#                         partner_amount = booking.total_amount * Decimal('0.75')
+#                         wallet, created = PartnerWallet.objects.get_or_create(partner=booking.partner)
+#                         wallet.balance += partner_amount
+#                         wallet.save()
+                        
+#                 elif transaction.extension:
+#                     extension = transaction.extension
+#                     extension.payment_status = 'paid'
+#                     extension.save()
+                    
+#                     # Update booking hours
+#                     booking = extension.booking
+#                     booking.hours += extension.additional_hours
+#                     booking.total_amount += extension.extension_amount
+#                     booking.save()
+                    
+#                     # Update partner wallet
+#                     if booking.partner:
+#                         partner_amount = extension.extension_amount * Decimal('0.75')
+#                         wallet, created = PartnerWallet.objects.get_or_create(partner=booking.partner)
+#                         wallet.balance += partner_amount
+#                         wallet.save()
+                
+#             except Transaction.DoesNotExist:
+#                 pass  # Log this situation
+                
+#         elif event == 'payment.failed':
+#             # Payment failed
+#             payment_id = webhook_data['payload']['payment']['entity']['id']
+#             order_id = webhook_data['payload']['payment']['entity']['order_id']
+            
+#             # Find related transaction
+#             try:
+#                 transaction = Transaction.objects.get(razorpay_order_id=order_id)
+                
+#                 # Update transaction
+#                 transaction.razorpay_payment_id = payment_id
+#                 transaction.status = 'failed'
+#                 transaction.save()
+                
+#                 # Update booking or extension status
+#                 if transaction.booking:
+#                     transaction.booking.payment_status = 'failed'
+#                     transaction.booking.save()
+#                 elif transaction.extension:
+#                     transaction.extension.payment_status = 'failed'
+#                     transaction.extension.save()
+                    
+#             except Transaction.DoesNotExist:
+#                 pass  # Log this situation
+        
+#         return Response({'status': 'success'}, status=status.HTTP_200_OK)
+
+
 class RazorPayWebhookView(APIView):
     # No authentication for webhooks coming from RazorPay
     
     def post(self, request):
+        import logging
+        logger = logging.getLogger(__name__)
+        
         # Get webhook data
         webhook_secret = settings.RAZORPAY_WEBHOOK_SECRET
         webhook_signature = request.headers.get('X-Razorpay-Signature')
         
         # Verify webhook signature
         try:
-            # Verify webhook signature
             razorpay_client.utility.verify_webhook_signature(
                 request.body.decode('utf-8'), 
                 webhook_signature, 
                 webhook_secret
             )
         except Exception as e:
+            logger.error(f"Invalid webhook signature: {str(e)}")
             return Response({
                 'error': 'Invalid webhook signature'
             }, status=status.HTTP_400_BAD_REQUEST)
@@ -863,6 +970,8 @@ class RazorPayWebhookView(APIView):
         # Process webhook data
         webhook_data = request.data
         event = webhook_data.get('event')
+        
+        logger.info(f"Processing webhook event: {event}")
         
         if event == 'payment.authorized':
             # Payment was successful
@@ -873,44 +982,59 @@ class RazorPayWebhookView(APIView):
             try:
                 transaction = Transaction.objects.get(razorpay_order_id=order_id)
                 
-                # Update transaction
-                transaction.razorpay_payment_id = payment_id
-                transaction.status = 'completed'
-                transaction.save()
+                # Idempotency check
+                if transaction.status == 'completed':
+                    logger.info(f"Payment already processed for order_id: {order_id}")
+                    return Response({'status': 'success'}, status=status.HTTP_200_OK)
                 
-                # Update booking or extension
-                if transaction.booking:
-                    booking = transaction.booking
-                    booking.payment_status = 'paid'
-                    booking.save()
+                # Use database transaction for atomicity
+                from django.db import transaction as db_transaction
+                with db_transaction.atomic():
+                    # Update transaction
+                    transaction.razorpay_payment_id = payment_id
+                    transaction.status = 'completed'
+                    transaction.save()
                     
-                    # Update partner wallet
-                    if booking.partner:
-                        partner_amount = booking.total_amount * Decimal('0.75')
-                        wallet, created = PartnerWallet.objects.get_or_create(partner=booking.partner)
-                        wallet.balance += partner_amount
-                        wallet.save()
+                    # Update booking or extension
+                    if transaction.booking:
+                        booking = transaction.booking
+                        booking.payment_status = 'paid'
+                        booking.save()
                         
-                elif transaction.extension:
-                    extension = transaction.extension
-                    extension.payment_status = 'paid'
-                    extension.save()
-                    
-                    # Update booking hours
-                    booking = extension.booking
-                    booking.hours += extension.additional_hours
-                    booking.total_amount += extension.extension_amount
-                    booking.save()
-                    
-                    # Update partner wallet
-                    if booking.partner:
-                        partner_amount = extension.extension_amount * Decimal('0.75')
-                        wallet, created = PartnerWallet.objects.get_or_create(partner=booking.partner)
-                        wallet.balance += partner_amount
-                        wallet.save()
+                        # Update partner wallet
+                        if booking.partner:
+                            try:
+                                partner_amount = booking.total_amount * Decimal('0.75')
+                                wallet, created = PartnerWallet.objects.get_or_create(partner=booking.partner)
+                                wallet.balance += partner_amount
+                                wallet.save()
+                            except Exception as e:
+                                logger.error(f"Failed to update partner wallet: {str(e)}")
+                                # Continue processing as this shouldn't fail the transaction
+                                
+                    elif transaction.extension:
+                        extension = transaction.extension
+                        extension.payment_status = 'paid'
+                        extension.save()
+                        
+                        # Update booking hours
+                        booking = extension.booking
+                        booking.hours += extension.additional_hours
+                        booking.total_amount += extension.extension_amount
+                        booking.save()
+                        
+                        # Update partner wallet
+                        if booking.partner:
+                            try:
+                                partner_amount = extension.extension_amount * Decimal('0.75')
+                                wallet, created = PartnerWallet.objects.get_or_create(partner=booking.partner)
+                                wallet.balance += partner_amount
+                                wallet.save()
+                            except Exception as e:
+                                logger.error(f"Failed to update partner wallet: {str(e)}")
                 
             except Transaction.DoesNotExist:
-                pass  # Log this situation
+                logger.error(f"Transaction not found for order_id: {order_id}")
                 
         elif event == 'payment.failed':
             # Payment failed
@@ -921,21 +1045,31 @@ class RazorPayWebhookView(APIView):
             try:
                 transaction = Transaction.objects.get(razorpay_order_id=order_id)
                 
-                # Update transaction
-                transaction.razorpay_payment_id = payment_id
-                transaction.status = 'failed'
-                transaction.save()
+                # Idempotency check
+                if transaction.status == 'failed':
+                    logger.info(f"Failed payment already processed for order_id: {order_id}")
+                    return Response({'status': 'success'}, status=status.HTTP_200_OK)
                 
-                # Update booking or extension status
-                if transaction.booking:
-                    transaction.booking.payment_status = 'failed'
-                    transaction.booking.save()
-                elif transaction.extension:
-                    transaction.extension.payment_status = 'failed'
-                    transaction.extension.save()
+                with db_transaction.atomic():
+                    # Update transaction
+                    transaction.razorpay_payment_id = payment_id
+                    transaction.status = 'failed'
+                    transaction.save()
+                    
+                    # Update booking or extension status
+                    if transaction.booking:
+                        transaction.booking.payment_status = 'failed'
+                        transaction.booking.save()
+                    elif transaction.extension:
+                        transaction.extension.payment_status = 'failed'
+                        transaction.extension.save()
                     
             except Transaction.DoesNotExist:
-                pass  # Log this situation
+                logger.error(f"Transaction not found for order_id: {order_id}")
+        
+        # Handle other events if needed
+        else:
+            logger.info(f"Unhandled webhook event: {event}")
         
         return Response({'status': 'success'}, status=status.HTTP_200_OK)
 

@@ -24,11 +24,15 @@ urlpatterns = [
 
     # User payments
     path('bookings/<int:booking_id>/create-order/', views.CreateBookingOrderView.as_view()),
-    path('bookings/<int:booking_id>/process-payment/', views.ProcessPaymentView.as_view()),
+
+    # legacy frontent process
+    # path('bookings/<int:booking_id>/process-payment/', views.ProcessPaymentView.as_view()),
 
     #cancel booking pay placeholder
     path('extensions/<int:extension_id>/create-order/', views.CreateExtensionOrderView.as_view()),
-    path('extensions/<int:extension_id>/process-payment/', views.ProcessExtensionPaymentView.as_view()),
+    
+    # legacy frontent process
+    # path('extensions/<int:extension_id>/process-payment/', views.ProcessExtensionPaymentView.as_view()),
     
     #cancel extention pay placeholder
     path('bookings/active/', views.UserActiveBookingsView.as_view(), name='user-active-bookings'),

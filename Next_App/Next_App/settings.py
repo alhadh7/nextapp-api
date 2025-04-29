@@ -243,6 +243,8 @@ SIMPLE_JWT = {
 
 RAZORPAY_KEY_ID = 'rzp_test_YkCy6jA2GFlk5F'
 RAZORPAY_KEY_SECRET = 'daOhxZJLVM1ShIlgGtZdLHYt'
+RAZORPAY_WEBHOOK_SECRET = ''
+
 
 DAISY_SETTINGS = {
     'SITE_TITLE': 'Health Connect Admin',  # The title of the site 
