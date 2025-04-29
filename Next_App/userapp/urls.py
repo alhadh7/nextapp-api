@@ -9,10 +9,7 @@ urlpatterns = [
     path('home/', views.UserHomeView.as_view(), name='user-home'),
     path('services/', views.ServiceTypeListView.as_view(), name='service-list'),
     path('bookings/history/', views.BookingHistoryView.as_view(), name='booking-history'),
-
     path('bookings/<int:booking_id>/', views.BookingDetailView.as_view(), name='booking-detail'),
-    
-
 
     # User endpoints
     path('bookings/create/', views.CreateBookingView.as_view(), name='create-booking'),
@@ -30,7 +27,7 @@ urlpatterns = [
 
     #cancel booking pay placeholder
     path('extensions/<int:extension_id>/create-order/', views.CreateExtensionOrderView.as_view()),
-    
+
     # legacy frontent process
     # path('extensions/<int:extension_id>/process-payment/', views.ProcessExtensionPaymentView.as_view()),
     
