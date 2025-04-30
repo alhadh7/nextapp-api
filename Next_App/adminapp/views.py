@@ -472,8 +472,20 @@ from .forms import UserUpdateForm  # Create this form to handle user modificatio
 @admin_required
 def user_list(request):
     """List all users with options to delete and modify."""
-    users = CustomUser.objects.filter(is_partner=False, is_superuser=False).order_by('-id')
+    # users = CustomUser.objects.filter(is_partner=False, is_superuser=False).order_by('-id')
     
+    # Step 1: Find IDs of partner-only accounts (never went through user flow)
+    partner_only_ids = Partner.objects.filter(
+        is_partner=True
+    ).exclude(
+        phone_number__in=CustomUser.objects.filter(is_partner=True).values_list('phone_number', flat=True)
+    ).values_list('id', flat=True)
+
+    # Step 2: Get user list excluding partner-only accounts
+    users = CustomUser.objects.filter(
+        is_superuser=False
+    ).exclude(id__in=partner_only_ids).order_by('-id')
+
     # Handle delete user
     if request.method == 'POST' and 'delete_user' in request.POST:
         user_id = request.POST.get('user_id')

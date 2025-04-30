@@ -565,11 +565,26 @@ class ToggleWorkStatusView(APIView):
 
 
             # For "Book Later" bookings, check if the scheduled date is today or in the past
-            if not booking.is_instant and booking.scheduled_date > timezone.now().date():
-                return Response({
-                    "error": "Cannot start work for future bookings. This booking is scheduled for " + 
-                            str(booking.scheduled_date)
-                }, status=status.HTTP_400_BAD_REQUEST)
+            # if not booking.is_instant and booking.scheduled_date > timezone.now().date():
+            #     return Response({
+            #         "error": "Cannot start work for future bookings. This booking is scheduled for " + 
+            #                 str(booking.scheduled_date)
+            #     }, status=status.HTTP_400_BAD_REQUEST)
+
+
+            if not booking.is_instant:
+                
+                # Combine scheduled date and time into a datetime object
+                scheduled_datetime = timezone.make_aware(
+                    datetime.combine(booking.scheduled_date, booking.scheduled_time),
+                    timezone.get_current_timezone()
+                )
+
+                if scheduled_datetime > timezone.now():
+                    return Response({
+                        "error": f"Cannot start work before the scheduled time. Booking is set for {scheduled_datetime.strftime('%Y-%m-%d %I:%M %p')}."
+                    }, status=status.HTTP_400_BAD_REQUEST)
+
             
             # Toggle status based on current status
             if booking.status == 'confirmed':

@@ -33,7 +33,9 @@ class CustomUser(AbstractBaseUser):
     phone_number = models.CharField(max_length=15, unique=True)
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=255)
+
     is_partner = models.BooleanField(default=False)
+    
     USERNAME_FIELD = 'phone_number'
     REQUIRED_FIELDS = ['email', 'full_name']
     is_staff = models.BooleanField(default=False)
@@ -129,8 +131,8 @@ class Booking(models.Model):
     # Booking details
     is_instant = models.BooleanField(default=True)  # True for "Book Now", False for "Book Later"
     hours = models.PositiveIntegerField()
-    scheduled_date = models.DateField(null=True, blank=True)  # Only for "Book Later"
-    scheduled_time = models.TimeField(null=True, blank=True)  # Only for "Book Later"
+    scheduled_date = models.DateField(null=True, blank=True)  
+    scheduled_time = models.TimeField(null=True, blank=True)  
     notes = models.TextField(blank=True, null=True)  # Optional field for storing additional notes
 
 
