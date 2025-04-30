@@ -612,11 +612,11 @@ class UserActiveBookingsView(APIView):
                 "error": "Partners cannot see user bookings."
             }, status=status.HTTP_403_FORBIDDEN)
             
-        # Active bookings are those that are confirmed, in progress, or scheduled for future
+        # Active bookings are those that are pending, confirmed, in progress, or scheduled for future
         active_bookings = Booking.objects.filter(
             user=request.user
         ).filter(
-            Q(status='confirmed') | Q(status='in_progress')
+            Q(status='pending') | Q(status='confirmed') | Q(status='in_progress')
         )
         
         serializer = BookingDetailSerializer(active_bookings, many=True)
@@ -973,7 +973,7 @@ class RazorPayWebhookView(APIView):
         
         logger.info(f"Processing webhook event: {event}")
         
-        if event == 'payment.authorized':
+        if event == 'payment.captured':
             # Payment was successful
             payment_id = webhook_data['payload']['payment']['entity']['id']
             order_id = webhook_data['payload']['payment']['entity']['order_id']
