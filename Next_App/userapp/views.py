@@ -282,18 +282,18 @@ class BookingAvailablePartnersView(APIView):
                 "error": "Booking auto-cancelled due to no available partners after 30 minutes."
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        print(f"Booking ID: {booking.id}, Partner Type: {booking.partner_type}")
+        # print(f"Booking ID: {booking.id}, Partner Type: {booking.partner_type}")
 
         # Step 1: Partners who accepted the booking
         accepted_partners = Partner.objects.filter(
             booking_requests__booking=booking,
             booking_requests__status='accepted'
         )
-        print(f"Accepted partners count: {accepted_partners.count()}")
+        # print(f"Accepted partners count: {accepted_partners.count()}")
 
         # Step 2: Only verified partners
         verified_partners = accepted_partners.filter(is_verified=True)
-        print(f"Verified accepted partners count: {verified_partners.count()}")
+        # print(f"Verified accepted partners count: {verified_partners.count()}")
 
         # Step 3: Cast experience to Integer for proper filtering
         verified_partners = verified_partners.annotate(
@@ -303,12 +303,12 @@ class BookingAvailablePartnersView(APIView):
         # Step 4: Filter by experience based on partner_type
         if booking.partner_type == 'trained':
             final_partners = verified_partners.filter(experience_int__gte=2)
-            print("Filtering for trained partners with experience >= 2")
+            # print("Filtering for trained partners with experience >= 2")
         else:
             final_partners = verified_partners.filter(experience_int__lt=2)
-            print("Filtering for untrained partners with experience < 2")
+            # print("Filtering for untrained partners with experience < 2")
 
-        print(f"Final partners count after filtering: {final_partners.count()}")
+        # print(f"Final partners count after filtering: {final_partners.count()}")
 
         serializer = PartnerSerializer(final_partners, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
