@@ -17,9 +17,9 @@ from django.db.models import Q
 from datetime import datetime
 
 
-from authentication.serializers import BookingDetailSerializer, BookingExtensionSerializer, BookingRequestSerializer, ReviewSerializer, ServiceTypeSerializer
+from authentication.serializers import BankDetailsSerializer, BookingDetailSerializer, BookingExtensionSerializer, BookingRequestSerializer, ReviewSerializer, ServiceTypeSerializer, WalletDetailsSerializer
 from authentication.models import (
-    CustomUser, Partner, ServiceType, Booking, 
+    CustomUser, Partner, PartnerWallet, ServiceType, Booking, 
     BookingRequest, BookingExtension, Review
 )
 
@@ -57,6 +57,63 @@ class PartnerHomeView(APIView):
             "experience": partner.experience,
             "is_verified": partner.is_verified
         }, status=status.HTTP_200_OK)
+
+
+# views.py
+class PartnerWalletDetailsView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        if not is_partner:
+            return Response({
+                "error": "Access denied. Only partners logged in via the partner app can view this page."
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            partner = Partner.objects.get(id=request.user.id)
+        except Partner.DoesNotExist:
+            return Response({"error": "Partner not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            wallet = partner.wallet  # via related_name='wallet'
+        except PartnerWallet.DoesNotExist:
+            return Response({"error": "Wallet not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        data = {
+            "balance": wallet.balance,
+            "last_payout_date": wallet.last_payout_date,
+            "total_earnings": partner.total_earnings
+        }
+        serializer = WalletDetailsSerializer(data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+
+class UpdateBankDetailsView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        if not is_partner:
+            return Response({
+                "error": "Access denied. Only partners logged in via the partner app can view this page."
+            }, status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            partner = Partner.objects.get(id=request.user.id)
+        except Partner.DoesNotExist:
+            return Response({"error": "Partner not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = BankDetailsSerializer(partner, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "Bank details updated successfully."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 class ServiceTypeListView(generics.ListAPIView):

@@ -20,4 +20,8 @@ urlpatterns = [
     path('extensions/<int:extension_id>/respond/', views.RespondToExtensionRequestView.as_view(), name='partner-respond-extension'),
     path('bookings/completed/', views.PartnerCompletedBookingsView.as_view(), name='partner-completed-bookings'),
     path('reviews/', views.PartnerReviewsView.as_view(), name='partner-reviews'),
+
+    path('update-bank-details/', views.UpdateBankDetailsView.as_view(), name='partner-update-bank-details'),
+    path('wallet-details/', views.PartnerWalletDetailsView.as_view(), name='partner-wallet-details'),
+
 ]

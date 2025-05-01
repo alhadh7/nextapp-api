@@ -155,3 +155,19 @@ class ReviewSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 
+# serializers.py
+from rest_framework import serializers
+from .models import Partner
+
+class BankDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Partner
+        fields = ['bank_username', 'bank_account_number', 'ifsc_code']
+
+from rest_framework import serializers
+from .models import PartnerWallet, Partner
+
+class WalletDetailsSerializer(serializers.Serializer):
+    balance = serializers.DecimalField(max_digits=10, decimal_places=2)
+    last_payout_date = serializers.DateTimeField(allow_null=True)
+    total_earnings = serializers.DecimalField(max_digits=12, decimal_places=2)
