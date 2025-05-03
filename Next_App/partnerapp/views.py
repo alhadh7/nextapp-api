@@ -678,6 +678,30 @@ class ToggleWorkStatusView(APIView):
                 "error": "Partner not found."
             }, status=status.HTTP_404_NOT_FOUND)
 
+
+class PartnerBookingExtensionsView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, booking_id):
+        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        if not is_partner:
+            return Response({"error": "Access denied. Only partners can view this data."},
+                            status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            partner = Partner.objects.get(id=request.user.id)
+            if not partner.is_verified:
+                return Response({"error": "Partner is not verified."}, status=status.HTTP_403_FORBIDDEN)
+
+            booking = get_object_or_404(Booking, id=booking_id, partner=partner, status='in_progress')
+            extensions = booking.extensions.all()
+            serializer = BookingExtensionSerializer(extensions, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Partner.DoesNotExist:
+            return Response({"error": "Partner not found."}, status=status.HTTP_404_NOT_FOUND)
+
 class RespondToExtensionRequestView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]

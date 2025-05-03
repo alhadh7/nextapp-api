@@ -17,7 +17,10 @@ urlpatterns = [
     path('bookings/<int:booking_id>/accept/', views.AcceptBookingView.as_view(), name='partner-accept-booking'),
     path('bookings/active/', views.PartnerActiveBookingsView.as_view(), name='partner-active-bookings'),
     path('bookings/<int:booking_id>/toggle-status/', views.ToggleWorkStatusView.as_view(), name='partner-toggle-work-status'),
+
+    path('bookings/<int:booking_id>/extensions/', views.PartnerBookingExtensionsView.as_view(), name='partner-booking-extensions'),
     path('extensions/<int:extension_id>/respond/', views.RespondToExtensionRequestView.as_view(), name='partner-respond-extension'),
+    
     path('bookings/completed/', views.PartnerCompletedBookingsView.as_view(), name='partner-completed-bookings'),
     path('reviews/', views.PartnerReviewsView.as_view(), name='partner-reviews'),
 

@@ -20,6 +20,11 @@
                 <th class="py-2 px-4 border-b text-left">Phone</th>
                 <th class="py-2 px-4 border-b text-left">Education</th>
                 <th class="py-2 px-4 border-b text-left">Verified</th>
+                <th class="py-2 px-4 border-b text-left">Wallet Balance</th>
+                <th class="py-2 px-4 border-b text-left">Last Payout</th>
+                <th class="py-2 px-4 border-b text-left">Total Earnings</th>
+
+
                 <th class="py-2 px-4 border-b text-left">Actions</th>
             </tr>
         </thead>
@@ -37,6 +42,9 @@
                     <span class="px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">Pending</span>
                     {% endif %}
                 </td>
+                <td class="py-2 px-4 border-b">₹{{ partner.wallet_balance|default:"N/A" }}</td>
+                <td class="py-2 px-4 border-b">{{ partner.last_payout|date:"Y-m-d H:i" }}</td>
+                <td class="py-2 px-4 border-b">₹{{ partner.total_earnings }}</td>
                 <td class="py-2 px-4 border-b space-x-2">
                     <!-- Edit -->
                     <a href="#" @click.prevent="openModal = true" class="text-blue-500 hover:underline">Edit</a>
@@ -47,6 +55,18 @@
                         <input type="hidden" name="partner_id" value="{{ partner.id }}">
                         <button type="submit" name="delete_partner" class="text-red-500 hover:underline">Delete</button>
                     </form>
+
+                 
+                    <!-- Trigger Payout -->
+                    <form method="post" style="display:inline;" action="{% url 'adminapp:trigger_partner_payout' partner.id %}"
+                        onsubmit="return confirm('Are you sure you want to trigger payout?');">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="text-red-500 hover:underline">
+                             Payout
+                        </button>
+                    </form>
+
 
                     <!-- Edit Modal -->
                     <div

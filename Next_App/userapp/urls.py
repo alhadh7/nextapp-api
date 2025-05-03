@@ -30,7 +30,7 @@ urlpatterns = [
 
     # legacy frontent process
     # path('extensions/<int:extension_id>/process-payment/', views.ProcessExtensionPaymentView.as_view()),
-    
+
     #cancel extention pay placeholder
     path('bookings/active/', views.UserActiveBookingsView.as_view(), name='user-active-bookings'),
     path('bookings/<int:booking_id>/extension/', views.RequestBookingExtensionView.as_view(), name='request-extension'),

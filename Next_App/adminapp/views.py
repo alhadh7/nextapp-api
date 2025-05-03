@@ -5,6 +5,7 @@ import pyotp
 import qrcode
 from io import BytesIO
 import base64
+from django.utils.timezone import now
 
 
 
@@ -416,7 +417,7 @@ from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import get_user_model
 from django.core.paginator import Paginator
-from authentication.models import CustomUser, Partner
+from authentication.models import CustomUser, Partner, PartnerWallet
 from authentication.models import ServiceType, Booking, BookingRequest, Review
 
 User = get_user_model()
@@ -533,6 +534,11 @@ def partner_list(request):
     """List all partners with options to edit and delete."""
     partners = Partner.objects.all().order_by('-id')
 
+    for partner in partners:
+        wallet = getattr(partner, 'wallet', None)
+        partner.wallet_balance = wallet.balance if wallet else None
+        partner.last_payout = wallet.last_payout_date if wallet else None
+
     # Handle delete partner
     if request.method == 'POST' and 'delete_partner' in request.POST:
         partner_id = request.POST.get('partner_id')
@@ -561,6 +567,28 @@ def partner_list(request):
 
     return render(request, 'adminapp/partner_list.html', {'page_obj': page_obj})
 
+@admin_required
+def trigger_partner_payout(request, partner_id):
+    partner = get_object_or_404(Partner, id=partner_id)
+    print(partner)
+    try:
+        wallet = partner.wallet
+    except PartnerWallet.DoesNotExist:
+        messages.error(request, "Wallet not found for this partner.")
+        return redirect('adminapp:partner_list')
+
+    if wallet.balance >= 0:
+        # Simulate payout
+        wallet.last_payout_date = now()
+        partner.last_payment_date = now()
+        wallet.balance = 0
+        wallet.save()
+        partner.save()
+        messages.success(request, f"Payout triggered for {partner.full_name}.")
+    else:
+        messages.warning(request, f"No balance available for {partner.full_name}.")
+
+    return redirect('adminapp:partner_list')
 
 @admin_required
 def booking_list(request):

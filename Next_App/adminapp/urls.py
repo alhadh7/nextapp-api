@@ -23,5 +23,6 @@ urlpatterns = [
     path('bookings/edit/<int:booking_id>/', edit_booking, name='edit_booking'),
     path('bookings/delete/<int:booking_id>/', delete_booking, name='delete_booking'),
 
-                    
+    path('partners/<int:partner_id>/trigger-payout/', trigger_partner_payout, name='trigger_partner_payout'),
+                   
 ]
