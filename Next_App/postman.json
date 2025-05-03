@@ -269,6 +269,22 @@
                     }
                 },
                 {
+                    "name": "View Extension Requests by Booking ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            { "key": "Authorization", "value": "Bearer {{access_token}}" },
+                            { "key": "Content-Type", "value": "application/json" }
+                        ],
+                        "url": {
+                            "raw": "{{base_url}}/partner/bookings/{{booking_id}}/extensions/",
+                            "host": ["{{base_url}}"],
+                            "path": ["partner", "bookings", "{{booking_id}}", "extensions"]
+                        }
+                    }
+                },
+
+                {
                     "name": "Respond to Extension Request",
                     "request": {
                         "method": "POST",
