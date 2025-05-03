@@ -634,7 +634,18 @@ class RequestBookingExtensionView(APIView):
             user=request.user,
             status='in_progress'
         )
-        
+    
+        # ❌ Check if there's an existing extension that is not rejected
+        existing_active_extension = booking.extensions.filter(
+            status__in=['pending', 'approved']
+        ).exists()
+
+        if existing_active_extension:
+            return Response(
+                {"error": "An extension request already exists for this booking."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
         # Add the 'booking' object to the incoming request data
         request.data['booking'] = booking.id  # Use the booking's ID in the request data
         
