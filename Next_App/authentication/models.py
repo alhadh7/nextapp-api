@@ -78,6 +78,8 @@ class Partner(CustomUser):
     is_verified = models.BooleanField(default=False)  
     experience = models.CharField(max_length=255, null=True, blank=True)
 
+
+
     bank_username = models.CharField(max_length=255, null=True, blank=True)
     bank_account_number = models.CharField(max_length=50, null=True, blank=True)
     ifsc_code = models.CharField(max_length=20, null=True, blank=True)

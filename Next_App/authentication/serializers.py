@@ -126,16 +126,6 @@ class BookingExtensionSerializer(serializers.ModelSerializer):
         # Call the parent create method to actually save the object
         return super().create(validated_data)
 
-class BookingDetailSerializer(serializers.ModelSerializer):
-    service_type = ServiceTypeSerializer(read_only=True)
-    partner = PartnerSerializer(read_only=True)
-    extensions = BookingExtensionSerializer(many=True, read_only=True)  # Add this line
-
-    class Meta:
-        model = Booking
-        fields = '__all__'
-        read_only_fields = ['user', 'status', 'work_started_at', 'work_ended_at', 'total_amount', 'payment_status']
-
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
@@ -154,6 +144,20 @@ class ReviewSerializer(serializers.ModelSerializer):
 
         # Create and return the review
         return super().create(validated_data)
+
+class BookingDetailSerializer(serializers.ModelSerializer):
+    review = ReviewSerializer(required=False)  # Optional review field
+
+    service_type = ServiceTypeSerializer(read_only=True)
+    partner = PartnerSerializer(read_only=True)
+    extensions = BookingExtensionSerializer(many=True, read_only=True)  # Add this line
+
+    class Meta:
+        model = Booking
+        fields = '__all__'
+        read_only_fields = ['user', 'status', 'work_started_at', 'work_ended_at', 'total_amount', 'payment_status', 'review']
+
+
 
 
 # serializers.py
