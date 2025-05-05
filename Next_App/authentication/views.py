@@ -238,12 +238,31 @@ class RegisterPartnerView(APIView):
     throttle_classes = [OTPThrottle]
     
     def post(self, request):
+        # Basic information
         phone_number = request.data.get('phone_number')
         email = request.data.get('email')
         full_name = request.data.get('full_name')
         education = request.data.get('education')
         experience = request.data.get('experience')
+        
+        # New personal information fields
+        dob = request.data.get('dob')
+        languages_known = request.data.get('languages_known')
+        secondary_phone_number = request.data.get('secondary_phone_number')
+        address = request.data.get('address')
+        
+        # Bank details
+        bank_username = request.data.get('bank_username')
+        bank_account_number = request.data.get('bank_account_number')
+        ifsc_code = request.data.get('ifsc_code')
+        
+        # Document files
         medical_certificate = request.FILES.get('medical_certificate')
+        adhar_card_front = request.FILES.get('adhar_card_front')
+        adhar_card_back = request.FILES.get('adhar_card_back')
+        driving_license_front = request.FILES.get('driving_license_front')
+        driving_license_back = request.FILES.get('driving_license_back')
+        profile_picture = request.FILES.get('profile_picture')
 
         # Check if a user (either normal or partner) already exists with the same phone number
         user_exists = CustomUser.objects.filter(phone_number=phone_number, is_partner=True).exists()
@@ -260,28 +279,55 @@ class RegisterPartnerView(APIView):
         if otp_response.get('responseCode') == 200:
             verification_id = otp_response['data']['verificationId']
 
-            # Since we can't store the actual file in cache, we'll need to temporarily save it
-            # and store the reference/path in the cache if a medical certificate was provided
-            medical_certificate_ref = None
-            if medical_certificate:
-                # You might need to implement a temporary storage solution here
-                # This is a placeholder for that logic
-                from django.core.files.storage import default_storage
-                from django.core.files.base import ContentFile
-                import os
-                
-                # Generate a unique temporary path
-                temp_path = f'temp_medical_certificates/{phone_number}_{verification_id}_{os.path.basename(medical_certificate.name)}'
-                path = default_storage.save(temp_path, ContentFile(medical_certificate.read()))
-                medical_certificate_ref = path
+            # Since we can't store the actual files in cache, we'll need to temporarily save them
+            # and store the references/paths in the cache
+            from django.core.files.storage import default_storage
+            from django.core.files.base import ContentFile
+            import os
+            
+            # Helper function to save file temporarily
+            def save_temp_file(file_obj, file_type):
+                if not file_obj:
+                    return None
+                temp_path = f'temp_{file_type}/{phone_number}_{verification_id}_{os.path.basename(file_obj.name)}'
+                path = default_storage.save(temp_path, ContentFile(file_obj.read()))
+                return path
+            
+            # Save all files temporarily
+            medical_certificate_ref = save_temp_file(medical_certificate, 'medical_certificates')
+            adhar_card_front_ref = save_temp_file(adhar_card_front, 'adhar_front')
+            adhar_card_back_ref = save_temp_file(adhar_card_back, 'adhar_back')
+            driving_license_front_ref = save_temp_file(driving_license_front, 'license_front')
+            driving_license_back_ref = save_temp_file(driving_license_back, 'license_back')
+            profile_picture_ref = save_temp_file(profile_picture, 'profile_pictures')
 
             # Store partner registration data in cache with verification ID as part of the key
             partner_data = {
+                # Basic information
                 'email': email,
                 'full_name': full_name,
                 'education': education,
                 'experience': experience,
-                'medical_certificate_ref': medical_certificate_ref,  # Store the reference to the file
+                
+                # New personal information fields
+                'dob': dob,
+                'languages_known': languages_known,
+                'secondary_phone_number': secondary_phone_number,
+                'address': address,
+                
+                # Bank details
+                'bank_username': bank_username,
+                'bank_account_number': bank_account_number,
+                'ifsc_code': ifsc_code,
+                
+                # Document file references
+                'medical_certificate_ref': medical_certificate_ref,
+                'adhar_card_front_ref': adhar_card_front_ref,
+                'adhar_card_back_ref': adhar_card_back_ref,
+                'driving_license_front_ref': driving_license_front_ref,
+                'driving_license_back_ref': driving_license_back_ref,
+                'profile_picture_ref': profile_picture_ref,
+                
                 'verification_id': verification_id,
                 'timestamp': datetime.now().timestamp()
             }
@@ -312,11 +358,46 @@ class VerifyPartnerView(APIView):
         response_code = verification_response.get('responseCode')
         
         if response_code == 200 and verification_response.get('data') and verification_response['data'].get('verificationStatus') == 'VERIFICATION_COMPLETED':
+            # Extract all partner data
             email = partner_data.get('email', '')
             full_name = partner_data.get('full_name', '')
             education = partner_data.get('education', '')
-            medical_certificate_ref = partner_data.get('medical_certificate_ref')
             experience = partner_data.get('experience', '')
+            
+            # New personal information fields
+            dob = partner_data.get('dob')
+            languages_known = partner_data.get('languages_known')
+            secondary_phone_number = partner_data.get('secondary_phone_number')
+            address = partner_data.get('address')
+            
+            # Bank details
+            bank_username = partner_data.get('bank_username')
+            bank_account_number = partner_data.get('bank_account_number')
+            ifsc_code = partner_data.get('ifsc_code')
+            
+            # Document file references
+            medical_certificate_ref = partner_data.get('medical_certificate_ref')
+            adhar_card_front_ref = partner_data.get('adhar_card_front_ref')
+            adhar_card_back_ref = partner_data.get('adhar_card_back_ref')
+            driving_license_front_ref = partner_data.get('driving_license_front_ref')
+            driving_license_back_ref = partner_data.get('driving_license_back_ref')
+            profile_picture_ref = partner_data.get('profile_picture_ref')
+            
+            # Helper function to save file from temporary storage to model field
+            def save_file_to_model(model_instance, field_name, temp_file_ref):
+                if not temp_file_ref:
+                    return
+                    
+                from django.core.files.storage import default_storage
+                from django.core.files import File
+                import os
+                
+                if default_storage.exists(temp_file_ref):
+                    with default_storage.open(temp_file_ref) as f:
+                        filename = os.path.basename(temp_file_ref)
+                        getattr(model_instance, field_name).save(filename, File(f), save=False)
+                    default_storage.delete(temp_file_ref)
+            
             # Check if user with this phone number already exists
             existing_user = CustomUser.objects.filter(phone_number=phone_number).first()
             
@@ -324,18 +405,30 @@ class VerifyPartnerView(APIView):
                 # If it's already a partner, just update the fields
                 if hasattr(existing_user, 'partner'):
                     partner = existing_user.partner
+                    
+                    # Update basic fields
                     partner.education = education
                     partner.experience = experience
-                    # Handle medical certificate if a reference was stored
-                    if medical_certificate_ref:
-                        from django.core.files.storage import default_storage
-                        if default_storage.exists(medical_certificate_ref):
-                            with default_storage.open(medical_certificate_ref) as f:
-                                import os
-                                filename = os.path.basename(medical_certificate_ref)
-                                from django.core.files import File
-                                partner.medical_certificate.save(filename, File(f), save=False)
-                            default_storage.delete(medical_certificate_ref)
+                    
+                    # Update new personal information fields
+                    if dob:
+                        partner.dob = dob
+                    partner.languages_known = languages_known
+                    partner.secondary_phone_number = secondary_phone_number
+                    partner.address = address
+                    
+                    # Update bank details
+                    partner.bank_username = bank_username
+                    partner.bank_account_number = bank_account_number
+                    partner.ifsc_code = ifsc_code
+                    
+                    # Handle document files
+                    save_file_to_model(partner, 'medical_certificate', medical_certificate_ref)
+                    save_file_to_model(partner, 'adhar_card_front', adhar_card_front_ref)
+                    save_file_to_model(partner, 'adhar_card_back', adhar_card_back_ref)
+                    save_file_to_model(partner, 'driving_license_front', driving_license_front_ref)
+                    save_file_to_model(partner, 'driving_license_back', driving_license_back_ref)
+                    save_file_to_model(partner, 'profile_picture', profile_picture_ref)
                     
                     partner.save()
                 else:
@@ -344,25 +437,33 @@ class VerifyPartnerView(APIView):
                         customuser_ptr=existing_user,
                         education=education,
                         experience=experience,
-                        is_partner=True
+                        is_partner=True,
+                        # New personal information fields
+                        dob=dob if dob else None,
+                        languages_known=languages_known,
+                        secondary_phone_number=secondary_phone_number,
+                        address=address,
+                        # Bank details
+                        bank_username=bank_username,
+                        bank_account_number=bank_account_number,
+                        ifsc_code=ifsc_code
                     )
                     
                     # Set a default hashed password
                     partner.set_password("defaultpassword123")  # Change this to a secure value
-
-                    # Handle medical certificate
-                    if medical_certificate_ref:
-                        from django.core.files.storage import default_storage
-                        if default_storage.exists(medical_certificate_ref):
-                            with default_storage.open(medical_certificate_ref) as f:
-                                import os
-                                filename = os.path.basename(medical_certificate_ref)
-                                from django.core.files import File
-                                partner.medical_certificate.save(filename, File(f), save=False)
-                            default_storage.delete(medical_certificate_ref)
                     
-                    # This approach might need adjustment based on Django version and exact model setup
+                    # Save the partner first to be able to attach files
                     partner.save_base(raw=True)
+                    
+                    # Handle document files
+                    save_file_to_model(partner, 'medical_certificate', medical_certificate_ref)
+                    save_file_to_model(partner, 'adhar_card_front', adhar_card_front_ref)
+                    save_file_to_model(partner, 'adhar_card_back', adhar_card_back_ref)
+                    save_file_to_model(partner, 'driving_license_front', driving_license_front_ref)
+                    save_file_to_model(partner, 'driving_license_back', driving_license_back_ref)
+                    save_file_to_model(partner, 'profile_picture', profile_picture_ref)
+                    
+                    partner.save()
                     
                     # Update the user record to mark as partner
                     existing_user.is_partner = True
@@ -370,43 +471,45 @@ class VerifyPartnerView(APIView):
 
                 user_to_token = partner if not existing_user else existing_user
             else:
-                # Create a new partner/user
+                # Create a new partner/user with all fields
                 partner = Partner(
                     phone_number=phone_number,
                     email=email,
                     full_name=full_name,
                     education=education,
                     experience=experience,
-                    is_partner=True
+                    is_partner=True,
+                    # New personal information fields
+                    dob=dob if dob else None,
+                    languages_known=languages_known,
+                    secondary_phone_number=secondary_phone_number,
+                    address=address,
+                    # Bank details
+                    bank_username=bank_username,
+                    bank_account_number=bank_account_number,
+                    ifsc_code=ifsc_code
                 )
 
                 # Set a default hashed password
                 partner.set_password("defaultpassword123")  # Change this to a secure value
 
-                # Now save the partner
+                # Save the partner first to be able to attach files
                 partner.save()
                 
-                # Handle medical certificate
-                if medical_certificate_ref:
-                    from django.core.files.storage import default_storage
-                    if default_storage.exists(medical_certificate_ref):
-                        with default_storage.open(medical_certificate_ref) as f:
-                            import os
-                            filename = os.path.basename(medical_certificate_ref)
-                            from django.core.files import File
-                            partner.medical_certificate.save(filename, File(f), save=True)
-                        default_storage.delete(medical_certificate_ref)
-                
-                # user_to_token = partner
+                # Handle document files
+                save_file_to_model(partner, 'medical_certificate', medical_certificate_ref)
+                save_file_to_model(partner, 'adhar_card_front', adhar_card_front_ref)
+                save_file_to_model(partner, 'adhar_card_back', adhar_card_back_ref)
+                save_file_to_model(partner, 'driving_license_front', driving_license_front_ref)
+                save_file_to_model(partner, 'driving_license_back', driving_license_back_ref)
+                save_file_to_model(partner, 'profile_picture', profile_picture_ref)
             
             # Clean up cache
             cache.delete(f'partner_data_{phone_number}_{verification_id}')
             cache.delete(f'otp_retry_{phone_number}')
             
             # Generate JWT tokens
-            # tokens = get_tokens_for_user(user_to_token)
-
-            tokens = get_tokens_for_user(partner , is_partner = True)
+            tokens = get_tokens_for_user(partner, is_partner=True)
 
             return Response(tokens, status=status.HTTP_200_OK)
 
@@ -425,7 +528,6 @@ class VerifyPartnerView(APIView):
         error_message = error_messages.get(response_code, "OTP verification failed. Please try again.")
         
         return Response({'error': error_message, 'details': verification_response}, status=status.HTTP_400_BAD_REQUEST)
-
 
 # User Login API
 class UserLoginView(APIView):
@@ -646,3 +748,118 @@ class LogoutView(APIView):
                 return Response({'error': 'Refresh token is required'}, status=status.HTTP_400_BAD_REQUEST)
         except TokenError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+
+from rest_framework import status, permissions
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from django.core.files import File
+import os
+
+from .models import CustomUser, Partner
+from .serializers import CustomUserSerializer, PartnerSerializer
+
+# Update User Details View
+class UpdateUserView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def put(self, request):
+        """
+        Update user details excluding phone number
+        """
+        user = request.user
+        
+        # Exclude phone_number from updatable fields
+        updatable_fields = ['email', 'full_name', 'user_address']
+        
+        # Create a data dict with only allowed fields
+        data = {}
+        for field in updatable_fields:
+            if field in request.data:
+                data[field] = request.data.get(field)
+        
+        serializer = CustomUserSerializer(user, data=data, partial=True)
+        
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# Update Partner Details View
+class UpdatePartnerView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def put(self, request):
+        """
+        Update partner details excluding phone number
+        """
+        user = request.user
+        
+        # Ensure the user is a partner
+        if not user.is_partner or not hasattr(user, 'partner'):
+            return Response({"error": "You are not registered as a partner."}, 
+                           status=status.HTTP_403_FORBIDDEN)
+        
+        partner = get_object_or_404(Partner, pk=user.id)
+        
+        # Helper function to save file
+        def save_file_to_model(model_instance, field_name, file_obj):
+            if not file_obj:
+                return
+                
+            # Delete old file if it exists
+            old_file = getattr(model_instance, field_name)
+            if old_file:
+                try:
+                    old_file_path = old_file.path
+                    if default_storage.exists(old_file_path):
+                        default_storage.delete(old_file_path)
+                except:
+                    pass  # If deletion fails, we still proceed
+            
+            # Save new file
+            filename = os.path.basename(file_obj.name)
+            getattr(model_instance, field_name).save(filename, file_obj, save=False)
+        
+        # Handle text fields
+        updatable_fields = [
+            'email', 'full_name', 'education', 'experience',
+            'secondary_phone_number', 'languages_known', 'dob',
+            'bank_username', 'bank_account_number', 'ifsc_code',
+            'address'
+        ]
+        
+        # Create a data dict with only allowed fields
+        data = {}
+        for field in updatable_fields:
+            if field in request.data:
+                data[field] = request.data.get(field)
+        
+        # Handle file fields separately
+        file_fields = [
+            'adhar_card_front', 'adhar_card_back',
+            'driving_license_front', 'driving_license_back',
+            'profile_picture', 'medical_certificate'
+        ]
+        
+        for field in file_fields:
+            file_obj = request.FILES.get(field)
+            if file_obj:
+                save_file_to_model(partner, field, file_obj)
+        
+        # Apply text fields with serializer
+        serializer = PartnerSerializer(partner, data=data, partial=True)
+        
+        if serializer.is_valid():
+            # Save changes from serializer
+            updated_partner = serializer.save()
+            
+            # Return updated data
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

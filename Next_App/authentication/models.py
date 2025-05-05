@@ -33,6 +33,7 @@ class CustomUser(AbstractBaseUser):
     phone_number = models.CharField(max_length=15, unique=True)
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=255)
+    user_address = models.CharField(max_length=255, null=True, blank=True)
 
     is_partner = models.BooleanField(default=False)
     
@@ -73,17 +74,32 @@ class CustomUser(AbstractBaseUser):
 
 # Partner Model
 class Partner(CustomUser):
-    education = models.CharField(max_length=255)
-    medical_certificate = models.FileField(upload_to='certificates/',null=True, blank=True)
     is_verified = models.BooleanField(default=False)  
     experience = models.CharField(max_length=255, null=True, blank=True)
+    total_earnings = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
 
+    # Personal Information
+    adhar_card_front = models.ImageField(upload_to='documents/adhar_cards/front/', null=True, blank=True)  # Aadhar front image
+    adhar_card_back = models.ImageField(upload_to='documents/adhar_cards/back/', null=True, blank=True)   # Aadhar back image
+    driving_license_front = models.ImageField(upload_to='documents/driving_licenses/front/', null=True, blank=True)  # Driving license front image
+    driving_license_back = models.ImageField(upload_to='documents/driving_licenses/back/', null=True, blank=True)  # Driving license back image
+    profile_picture = models.ImageField(upload_to='documents/profile_pictures/', null=True, blank=True)  # Profile picture
 
+    medical_certificate = models.FileField(upload_to='certificates/',null=True, blank=True) # will this accept picture ?
+    education = models.CharField(max_length=255)
 
+    # Additional Information
+    dob = models.DateField(null=True, blank=True)  # Date of Birth
+    languages_known = models.CharField(max_length=255, null=True, blank=True)  # Languages known, comma-separated
+    secondary_phone_number = models.CharField(max_length=20, null=True, blank=True)  # Secondary phone number
+
+    # bank details
     bank_username = models.CharField(max_length=255, null=True, blank=True)
     bank_account_number = models.CharField(max_length=50, null=True, blank=True)
     ifsc_code = models.CharField(max_length=20, null=True, blank=True)
-    total_earnings = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+
+    # Location Details 
+    address = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return f"Partner: {self.id} {self.full_name} ({self.phone_number})"

@@ -65,7 +65,158 @@
                         ],
                         "url": {"raw": "{{base_url}}/user/home/", "host": ["{{base_url}}"], "path": ["user","home"]}
                     }
-                }
+                },
+                {
+                    "name": "Update User Details",
+                    "request": {
+                      "method": "PUT",
+                      "header": [
+                        {
+                          "key": "Authorization",
+                          "value": "Bearer {{jwt_token}}",
+                          "type": "text"
+                        },
+                        {
+                          "key": "Content-Type",
+                          "value": "application/json",
+                          "type": "text"
+                        }
+                      ],
+                      "body": {
+                        "mode": "raw",
+                        "raw": "{\n    \"email\": \"updated.email@example.com\",\n    \"full_name\": \"Updated User Name\",\n    \"user_address\": \"456 New Street, Mumbai, Maharashtra, 400001\"\n}"
+                      },
+                      "url": {
+                        "raw": "{{base_url}}/api/users/update/",
+                        "host": [
+                          "{{base_url}}"
+                        ],
+                        "path": [
+                          "api",
+                          "users",
+                          "update"
+                        ]
+                      },
+                      "description": "Updates basic user details except phone number"
+                    },
+                    "response": []
+                  },
+                  {
+                    "name": "Update Partner Details",
+                    "request": {
+                      "method": "PUT",
+                      "header": [
+                        {
+                          "key": "Authorization",
+                          "value": "Bearer {{jwt_token}}",
+                          "type": "text"
+                        }
+                      ],
+                      "body": {
+                        "mode": "formdata",
+                        "formdata": [
+                          {
+                            "key": "email",
+                            "value": "updated.partner@example.com",
+                            "type": "text"
+                          },
+                          {
+                            "key": "full_name",
+                            "value": "Dr. Updated Smith",
+                            "type": "text"
+                          },
+                          {
+                            "key": "education",
+                            "value": "MBBS, MD",
+                            "type": "text"
+                          },
+                          {
+                            "key": "experience",
+                            "value": "12",
+                            "type": "text"
+                          },
+                          {
+                            "key": "secondary_phone_number",
+                            "value": "9876543299",
+                            "type": "text"
+                          },
+                          {
+                            "key": "languages_known",
+                            "value": "English, Hindi, Marathi, Tamil",
+                            "type": "text"
+                          },
+                          {
+                            "key": "dob",
+                            "value": "1983-08-20",
+                            "type": "text"
+                          },
+                          {
+                            "key": "bank_username",
+                            "value": "DrSmith2023",
+                            "type": "text"
+                          },
+                          {
+                            "key": "bank_account_number",
+                            "value": "9876543210123456",
+                            "type": "text"
+                          },
+                          {
+                            "key": "ifsc_code",
+                            "value": "HDFC0001234",
+                            "type": "text"
+                          },
+                          {
+                            "key": "address",
+                            "value": "789 Doctor Colony, Hyderabad, Telangana, 500032",
+                            "type": "text"
+                          },
+                          {
+                            "key": "profile_picture",
+                            "type": "file",
+                            "src": ""
+                          },
+                          {
+                            "key": "medical_certificate",
+                            "type": "file",
+                            "src": ""
+                          },
+                          {
+                            "key": "adhar_card_front",
+                            "type": "file",
+                            "src": ""
+                          },
+                          {
+                            "key": "adhar_card_back",
+                            "type": "file",
+                            "src": ""
+                          },
+                          {
+                            "key": "driving_license_front",
+                            "type": "file",
+                            "src": ""
+                          },
+                          {
+                            "key": "driving_license_back",
+                            "type": "file",
+                            "src": ""
+                          }
+                        ]
+                      },
+                      "url": {
+                        "raw": "{{base_url}}/api/partners/update/",
+                        "host": [
+                          "{{base_url}}"
+                        ],
+                        "path": [
+                          "api",
+                          "partners",
+                          "update"
+                        ]
+                      },
+                      "description": "Updates partner details except phone number"
+                    },
+                    "response": []
+                  }
             ]
         },
         {
@@ -84,7 +235,7 @@
                     }
                 },
                 {
-                    "name": "Register Partner (with Medical Certificate)",
+                    "name": "Register Partner (with All Fields)",
                     "request": {
                         "method": "POST",
                         "header": [],
@@ -92,12 +243,28 @@
                         "body": {
                             "mode": "formdata",
                             "formdata": [
+
                                 {"key": "phone_number", "value": "9876543211", "type": "text"},
                                 {"key": "email", "value": "partner@example.com", "type": "text"},
                                 {"key": "full_name", "value": "Dr. Smith", "type": "text"},
                                 {"key": "education", "value": "MBBS", "type": "text"},
+                                {"key": "experience", "value": "10", "type": "text"},
+                                
+                                {"key": "dob", "value": "1985-06-15", "type": "text"},
+                                {"key": "languages_known", "value": "English, Hindi, Tamil", "type": "text"},
+                                {"key": "secondary_phone_number", "value": "9876543212", "type": "text"},
+                                {"key": "address", "value": "123 Main Street, Bangalore, Karnataka, 560001", "type": "text"},
+                                
+                                {"key": "bank_username", "value": "DrSmith", "type": "text"},
+                                {"key": "bank_account_number", "value": "1234567890", "type": "text"},
+                                {"key": "ifsc_code", "value": "SBIN0001234", "type": "text"},
+                                
                                 {"key": "medical_certificate", "type": "file", "src": ""},
-                                {"key": "experience", "value": "10", "type": "text"}
+                                {"key": "adhar_card_front", "type": "file", "src": ""},
+                                {"key": "adhar_card_back", "type": "file", "src": ""},
+                                {"key": "driving_license_front", "type": "file", "src": ""},
+                                {"key": "driving_license_back", "type": "file", "src": ""},
+                                {"key": "profile_picture", "type": "file", "src": ""}
                             ]
                         }
                     }

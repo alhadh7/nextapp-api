@@ -11,8 +11,12 @@ class CustomUserSerializer(serializers.ModelSerializer):
 class PartnerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Partner
-        fields = ['id', 'phone_number', 'email', 'full_name', 'education', 'experience', 'is_verified']
-        read_only_fields = ['id', 'is_verified']
+        fields = [
+            'id', 'phone_number', 'email', 'full_name', 'education', 'experience', 'is_verified',
+            'secondary_phone_number', 'languages_known', 'dob', 'bank_username', 
+            'bank_account_number', 'ifsc_code', 'address'
+        ]
+        read_only_fields = ['id', 'is_verified', 'phone_number']
 
 class ServiceTypeSerializer(serializers.ModelSerializer):
     # Adding a custom field to remove underscores from the 'name' field for the serialized output

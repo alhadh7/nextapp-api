@@ -6,7 +6,9 @@ from rest_framework.authtoken.views import obtain_auth_token
 from .views import (
     LogoutView, 
     RegisterPartnerView, 
-    RegisterUserView, 
+    RegisterUserView,
+    UpdatePartnerView,
+    UpdateUserView, 
     VerifyPartnerView, 
     VerifyUserView,
     UserLoginView,
@@ -36,4 +38,8 @@ urlpatterns = [
 
     # Logout endpoint
     path('logout/', LogoutView.as_view(), name='logout'),
+
+
+    path('users/update/', UpdateUserView.as_view(), name='update-user'),
+    path('partners/update/', UpdatePartnerView.as_view(), name='update-partner'),
 ]
