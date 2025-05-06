@@ -667,7 +667,7 @@ class RequestBookingExtensionView(APIView):
                         user=booking.partner.user,
                         title="Extension Requested",
                         body=f"An extension has been requested for Booking #{booking.id}.",
-                        data={"booking_id": booking.id, "extension_id": extension.id, "status": "extension_requested"}
+                        data={"booking_id": str(booking.id), "extension_id": extension.id, "status": "extension_requested"}
                     )
                 except Exception as e:
                     logger.warning(f"Failed to send extension notification to partner for booking #{booking.id}: {e}")
@@ -1035,7 +1035,7 @@ class RazorPayWebhookView(APIView):
                                 user=booking.user,
                                 title="Booking Confirmed",
                                 body="You have an active booking.",
-                                data={"booking_id": booking.id, "status": booking.status}
+                                data={"booking_id": str(booking.id), "status": booking.status}
                             )
                         except Exception as e:
                             logger.warning(f"Error sending active booking notification for booking #{booking.id}: {e}")
@@ -1067,7 +1067,7 @@ class RazorPayWebhookView(APIView):
                                 user=booking.user,
                                 title="Booking Extended",
                                 body=f"Extension confirmed with new hours ({booking.hours}).",
-                                data={"booking_id": booking.id, "status": booking.status}
+                                data={"booking_id": str(booking.id), "status": booking.status}
                             )
                         except Exception as e:
                             logger.warning(f"Failed to send extension confirmation notification for booking #{booking.id}: {e}")

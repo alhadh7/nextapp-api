@@ -673,7 +673,7 @@ class ToggleWorkStatusView(APIView):
                         user=booking.user,
                         title="Work Started",
                         body=f"Your booking #{booking.id} is now in progress",
-                        data={"booking_id": booking.id, "status": "in_progress"}
+                        data={"booking_id": str(booking.id), "status": "in_progress"}
                     )
                 except Exception as e:
                     logger.warning(f"Error sending start notification for booking #{booking.id}: {e}")
@@ -696,7 +696,7 @@ class ToggleWorkStatusView(APIView):
                         user=booking.user,
                         title="Work Completed",
                         body=f"Your booking #{booking.id} is now completed",
-                        data={"booking_id": booking.id, "status": "completed"}
+                        data={"booking_id": str(booking.id), "status": "completed"}
                     )
                 except Exception as e:
                     logger.warning(f"Error sending completion notification for booking #{booking.id}: {e}")
