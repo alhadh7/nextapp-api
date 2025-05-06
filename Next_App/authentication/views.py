@@ -14,7 +14,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
-from .models import OTP, Partner, CustomUser
+from .models import OTP, FCMToken, Partner, CustomUser
 
 import requests
 
@@ -863,3 +863,5 @@ class UpdatePartnerView(APIView):
             return Response(serializer.data, status=status.HTTP_200_OK)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+

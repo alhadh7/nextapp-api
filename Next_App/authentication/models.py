@@ -85,7 +85,7 @@ class Partner(CustomUser):
     driving_license_back = models.ImageField(upload_to='documents/driving_licenses/back/', null=True, blank=True)  # Driving license back image
     profile_picture = models.ImageField(upload_to='documents/profile_pictures/', null=True, blank=True)  # Profile picture
 
-    medical_certificate = models.FileField(upload_to='certificates/',null=True, blank=True) # will this accept picture ?
+    medical_certificate = models.FileField(upload_to='documents/certificates/',null=True, blank=True) # will this accept picture ?
     education = models.CharField(max_length=255)
 
     # Additional Information
@@ -280,3 +280,10 @@ class Transaction(models.Model):
     
     def __str__(self):
         return f"Transaction {self.id}: {self.transaction_type} - ₹{self.amount} - {self.status}"
+    
+
+# models.py
+class FCMToken(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='fcm_tokens')
+    token = models.CharField(max_length=255, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)

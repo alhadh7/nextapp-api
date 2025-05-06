@@ -16,7 +16,7 @@
                         "url": {"raw": "{{base_url}}/auth/register/user/", "host": ["{{base_url}}"], "path": ["auth","register", "user"]},
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"phone_number\": \"9876543210\", \"email\": \"user@example.com\", \"full_name\": \"John Doe\"}"
+                            "raw": "{\"phone_number\": \"9846081972\", \"email\": \"user@example.com\", \"full_name\": \"John Doe\"}"
                         }
                     }
                 },
@@ -28,7 +28,7 @@
                         "url": {"raw": "{{base_url}}/auth/verify/user/", "host": ["{{base_url}}"], "path": ["auth","verify", "user"]},
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"phone_number\": \"9876543210\", \"verification_id\": \"123456\", \"otp\": \"123456\"}"
+                            "raw": "{\"phone_number\": \"9846081972\", \"verification_id\": \"123456\", \"otp\": \"123456\"}"
                         }
                     }
                 },
@@ -40,7 +40,7 @@
                         "url": {"raw": "{{base_url}}/auth/login/user/", "host": ["{{base_url}}"], "path": ["auth","login", "user"]},
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"phone_number\": \"9876543210\"}"
+                            "raw": "{\"phone_number\": \"9846081972\"}"
                         }
                     }
                 },
@@ -52,7 +52,7 @@
                         "url": {"raw": "{{base_url}}/auth/verify/login/user/", "host": ["{{base_url}}"], "path": ["auth","verify", "login", "user"]},
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"phone_number\": \"9876543210\", \"verification_id\": \"123456\", \"otp\": \"123456\"}"
+                            "raw": "{\"phone_number\": \"9846081972\", \"verification_id\": \"123456\", \"otp\": \"123456\"}"
                         }
                     }
                 },
@@ -87,13 +87,13 @@
                         "raw": "{\n    \"email\": \"updated.email@example.com\",\n    \"full_name\": \"Updated User Name\",\n    \"user_address\": \"456 New Street, Mumbai, Maharashtra, 400001\"\n}"
                       },
                       "url": {
-                        "raw": "{{base_url}}/api/users/update/",
+                        "raw": "{{base_url}}/user/update/",
                         "host": [
                           "{{base_url}}"
                         ],
                         "path": [
-                          "api",
-                          "users",
+                  
+                          "user",
                           "update"
                         ]
                       },
@@ -101,6 +101,40 @@
                     },
                     "response": []
                   },
+                  {
+                    "name": "Save FCM Token",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{jwt_token}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"fcm_token\": \"YOUR_FCM_TOKEN\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/auth/save-fcm-token/",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "save-fcm-token"
+                            ]
+                        },
+                        "description": "Saves or updates the FCM token for the authenticated user."
+                    },
+                    "response": []
+                },
                   {
                     "name": "Update Partner Details",
                     "request": {
@@ -203,12 +237,12 @@
                         ]
                       },
                       "url": {
-                        "raw": "{{base_url}}/api/partners/update/",
+                        "raw": "{{base_url}}/auth/partners/update/",
                         "host": [
                           "{{base_url}}"
                         ],
                         "path": [
-                          "api",
+                          "auth",
                           "partners",
                           "update"
                         ]
@@ -230,7 +264,7 @@
                         "url": {"raw": "{{base_url}}/auth/register/partner/", "host": ["{{base_url}}"], "path": ["auth","register", "partner"]},
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"phone_number\": \"9876543211\", \"email\": \"partner@example.com\", \"full_name\": \"Dr. Smith\", \"education\": \"MBBS\", \"experience\": \"10\"}"
+                            "raw": "{\"phone_number\": \"9846081972\", \"email\": \"partner@example.com\", \"full_name\": \"Dr. Smith\", \"education\": \"MBBS\", \"experience\": \"10\"}"
                         }
                     }
                 },
@@ -244,7 +278,7 @@
                             "mode": "formdata",
                             "formdata": [
 
-                                {"key": "phone_number", "value": "9876543211", "type": "text"},
+                                {"key": "phone_number", "value": "9846081972", "type": "text"},
                                 {"key": "email", "value": "partner@example.com", "type": "text"},
                                 {"key": "full_name", "value": "Dr. Smith", "type": "text"},
                                 {"key": "education", "value": "MBBS", "type": "text"},
@@ -277,7 +311,7 @@
                         "url": {"raw": "{{base_url}}/auth/verify/partner/", "host": ["{{base_url}}"], "path": ["auth","verify", "partner"]},
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"phone_number\": \"9876543211\", \"verification_id\": \"123456\", \"otp\": \"123456\"}"
+                            "raw": "{\"phone_number\": \"9846081972\", \"verification_id\": \"123456\", \"otp\": \"123456\"}"
                         }
                     }
                 },
@@ -289,7 +323,7 @@
                         "url": {"raw": "{{base_url}}/auth/login/partner/", "host": ["{{base_url}}"], "path": ["auth","login", "partner"]},
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"phone_number\": \"9876543211\"}"
+                            "raw": "{\"phone_number\": \"9846081972\"}"
                         }
                     }
                 },
@@ -301,7 +335,7 @@
                         "url": {"raw": "{{base_url}}/auth/verify/login/partner/", "host": ["{{base_url}}"], "path": ["auth","verify", "login", "partner"]},
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"phone_number\": \"9876543211\", \"verification_id\": \"123456\", \"otp\": \"123456\"}"
+                            "raw": "{\"phone_number\": \"9846081972\", \"verification_id\": \"123456\", \"otp\": \"123456\"}"
                         }
                     }
                 },

@@ -2,6 +2,8 @@
 from django.urls import path
 from rest_framework.authtoken.views import obtain_auth_token
 
+from .utils import SaveFCMTokenView
+
 
 from .views import (
     LogoutView, 
@@ -42,4 +44,8 @@ urlpatterns = [
 
     path('users/update/', UpdateUserView.as_view(), name='update-user'),
     path('partners/update/', UpdatePartnerView.as_view(), name='update-partner'),
+
+
+    path('save-fcm-token/', SaveFCMTokenView.as_view(), name='save-fcm-token'),
+
 ]

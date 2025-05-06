@@ -17,9 +17,10 @@ from django.db.models import Q
 from datetime import datetime
 
 
+from authentication.utils import send_push_notification
 from authentication.serializers import BankDetailsSerializer, BookingDetailSerializer, BookingExtensionSerializer, BookingRequestSerializer, ReviewSerializer, ServiceTypeSerializer, WalletDetailsSerializer
 from authentication.models import (
-    CustomUser, Partner, PartnerWallet, ServiceType, Booking, 
+    CustomUser, FCMToken, Partner, PartnerWallet, ServiceType, Booking, 
     BookingRequest, BookingExtension, Review
 )
 
@@ -542,7 +543,20 @@ class AcceptBookingView(APIView):
                 # Update the status if it already exists
                 booking_request.status = 'accepted'
                 booking_request.save()
-            
+
+            # Send notification to the customer who created the booking
+            # You can use the customer's FCM token to send a notification
+            if booking.customer:
+                customer_tokens = FCMToken.objects.filter(user=booking.customer)
+                for token in customer_tokens:
+                    send_push_notification(
+                        token.token,  # Customer's FCM token
+                        "Booking Accepted",
+                        f"Your booking {booking.id} has been accepted by {partner.full_name}.",
+                        "booking_accepted",  # Optional, you can use this to track the notification type in the app
+                    )
+
+
             serializer = BookingRequestSerializer(booking_request)
             return Response(serializer.data, status=status.HTTP_200_OK)
             
@@ -650,6 +664,13 @@ class ToggleWorkStatusView(APIView):
                 booking.work_started_at = timezone.now()
                 booking.save()
                 
+                send_push_notification(
+                    user=booking.user,
+                    title="Work Started",
+                    body=f"Your booking #{booking.id} is now in progress",
+                    data={"booking_id": booking.id, "status": "in_progress"}
+                )
+
                 return Response({
                     "message": "Work started successfully",
                     "booking_id": booking.id,
@@ -661,7 +682,14 @@ class ToggleWorkStatusView(APIView):
                 booking.status = 'completed'
                 booking.work_ended_at = timezone.now()
                 booking.save()
-                
+
+                send_push_notification(
+                    user=booking.user,
+                    title="Work Completed",
+                    body=f"Your booking #{booking.id} is now completed",
+                    data={"booking_id": booking.id, "status": "completed"}
+                )
+
                 return Response({
                     "message": "Work completed successfully",
                     "booking_id": booking.id,

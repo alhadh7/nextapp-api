@@ -5,6 +5,7 @@ from . import views
 
 
 urlpatterns = [
+    
     path('services/', views.ServiceTypeListView.as_view(), name='service-list'),
     path('bookings/<int:booking_id>/', views.BookingDetailView.as_view(), name='booking-detail'),
     path('bookings/history/', views.BookingHistoryView.as_view(), name='booking-history'),
