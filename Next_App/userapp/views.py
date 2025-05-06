@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.utils import timezone
 
+from authentication.utils import send_push_notification
 from authentication.models import (
     CustomUser, Partner, PartnerWallet, ServiceType, Booking, 
     BookingRequest, BookingExtension, Review, Transaction
@@ -17,6 +18,10 @@ from authentication.serializers import (
     BookingCreateSerializer, BookingDetailSerializer, BookingRequestSerializer,
     BookingExtensionSerializer, ReviewSerializer
 )
+
+import logging
+logger = logging.getLogger(__name__)
+
 
 # Common views for both partners and users
 class UserHomeView(APIView):
@@ -654,6 +659,19 @@ class RequestBookingExtensionView(APIView):
         
         if serializer.is_valid():
             extension = serializer.save()  # Create and save the booking extension
+
+            # ✅ Send notification to the partner
+            if booking.partner and booking.partner.user:
+                try:
+                    send_push_notification(
+                        user=booking.partner.user,
+                        title="Extension Requested",
+                        body=f"An extension has been requested for Booking #{booking.id}.",
+                        data={"booking_id": booking.id, "extension_id": extension.id, "status": "extension_requested"}
+                    )
+                except Exception as e:
+                    logger.warning(f"Failed to send extension notification to partner for booking #{booking.id}: {e}")
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -1011,7 +1029,17 @@ class RazorPayWebhookView(APIView):
                         booking = transaction.booking
                         booking.payment_status = 'paid'
                         booking.save()
-                        
+
+                        try:
+                            send_push_notification(
+                                user=booking.user,
+                                title="Booking Confirmed",
+                                body="You have an active booking.",
+                                data={"booking_id": booking.id, "status": booking.status}
+                            )
+                        except Exception as e:
+                            logger.warning(f"Error sending active booking notification for booking #{booking.id}: {e}")
+
                         # Update partner wallet
                         if booking.partner:
                             try:
@@ -1033,7 +1061,17 @@ class RazorPayWebhookView(APIView):
                         booking.hours += extension.additional_hours
                         booking.total_amount += extension.extension_amount
                         booking.save()
-                        
+
+                        try:
+                            send_push_notification(
+                                user=booking.user,
+                                title="Booking Extended",
+                                body=f"Extension confirmed with new hours ({booking.hours}).",
+                                data={"booking_id": booking.id, "status": booking.status}
+                            )
+                        except Exception as e:
+                            logger.warning(f"Failed to send extension confirmation notification for booking #{booking.id}: {e}")
+
                         # Update partner wallet
                         if booking.partner:
                             try:

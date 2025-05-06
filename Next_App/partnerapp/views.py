@@ -16,6 +16,8 @@ from django.utils import timezone
 from django.db.models import Q
 from datetime import datetime
 
+import logging
+logger = logging.getLogger(__name__)
 
 from authentication.utils import send_push_notification
 from authentication.serializers import BankDetailsSerializer, BookingDetailSerializer, BookingExtensionSerializer, BookingRequestSerializer, ReviewSerializer, ServiceTypeSerializer, WalletDetailsSerializer
@@ -549,13 +551,15 @@ class AcceptBookingView(APIView):
             if booking.user:
                 customer_tokens = FCMToken.objects.filter(user=booking.user)
                 for token in customer_tokens:
-                    send_push_notification(
-                        token.token,  # Customer's FCM token
-                        "Booking Accepted",
-                        f"Your booking {booking.id} has been accepted by {partner.full_name}.",
-                        "booking_accepted",  # Optional, you can use this to track the notification type in the app
-                    )
-
+                    try:
+                        send_push_notification(
+                            token.token,  # Customer's FCM token
+                            "Booking Accepted",
+                            f"Your booking {booking.id} has been accepted by {partner.full_name}.",
+                            "booking_accepted",  # Optional, you can use this to track the notification type in the app
+                        )
+                    except Exception as e:
+                        logger.warning(f"FCM error for user {booking.user.id}: {str(e)}")
 
             serializer = BookingRequestSerializer(booking_request)
             return Response(serializer.data, status=status.HTTP_200_OK)
@@ -664,12 +668,16 @@ class ToggleWorkStatusView(APIView):
                 booking.work_started_at = timezone.now()
                 booking.save()
                 
-                send_push_notification(
-                    user=booking.user,
-                    title="Work Started",
-                    body=f"Your booking #{booking.id} is now in progress",
-                    data={"booking_id": booking.id, "status": "in_progress"}
-                )
+                try:
+                    send_push_notification(
+                        user=booking.user,
+                        title="Work Started",
+                        body=f"Your booking #{booking.id} is now in progress",
+                        data={"booking_id": booking.id, "status": "in_progress"}
+                    )
+                except Exception as e:
+                    logger.warning(f"Error sending start notification for booking #{booking.id}: {e}")
+
 
                 return Response({
                     "message": "Work started successfully",
@@ -683,12 +691,15 @@ class ToggleWorkStatusView(APIView):
                 booking.work_ended_at = timezone.now()
                 booking.save()
 
-                send_push_notification(
-                    user=booking.user,
-                    title="Work Completed",
-                    body=f"Your booking #{booking.id} is now completed",
-                    data={"booking_id": booking.id, "status": "completed"}
-                )
+                try:
+                    send_push_notification(
+                        user=booking.user,
+                        title="Work Completed",
+                        body=f"Your booking #{booking.id} is now completed",
+                        data={"booking_id": booking.id, "status": "completed"}
+                    )
+                except Exception as e:
+                    logger.warning(f"Error sending completion notification for booking #{booking.id}: {e}")
 
                 return Response({
                     "message": "Work completed successfully",
