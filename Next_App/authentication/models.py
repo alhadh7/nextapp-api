@@ -167,8 +167,11 @@ class Booking(models.Model):
     hospital_location = models.CharField(max_length=255, null=True, blank=True)  # Only for "Checkup Companion"
     
     # Status tracking
+
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
+    partner_accepted_at = models.DateTimeField(null=True, blank=True)
+
     work_started_at = models.DateTimeField(null=True, blank=True)
     work_ended_at = models.DateTimeField(null=True, blank=True)
     

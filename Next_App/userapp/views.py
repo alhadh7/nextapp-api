@@ -275,17 +275,18 @@ class BookingAvailablePartnersView(APIView):
         booking = get_object_or_404(Booking, id=booking_id, user=request.user)
 
         # Auto-cancel if expired and unassigned
-        if (
-            booking.status == 'pending' and
-            booking.partner is None and
-            timezone.now() - booking.created_at > timedelta(minutes=30)
-        ):
-            booking.status = 'cancelled'
-            booking.save()
-            print("Booking auto-cancelled due to timeout.")
-            return Response({
-                "error": "Booking auto-cancelled due to no available partners after 30 minutes."
-            }, status=status.HTTP_400_BAD_REQUEST)
+        # legacy now uses celery for cancellations
+        # if (
+        #     booking.status == 'pending' and
+        #     booking.partner is None and
+        #     timezone.now() - booking.created_at > timedelta(minutes=30)
+        # ):
+        #     booking.status = 'cancelled'
+        #     booking.save()
+        #     print("Booking auto-cancelled due to timeout.")
+        #     return Response({
+        #         "error": "Booking auto-cancelled due to no available partners after 30 minutes."
+        #     }, status=status.HTTP_400_BAD_REQUEST)
 
         # print(f"Booking ID: {booking.id}, Partner Type: {booking.partner_type}")
 
@@ -338,6 +339,8 @@ class SelectPartnerView(APIView):
         # Update booking with selected partner
         booking.partner = partner
         booking.status = 'confirmed'
+        booking.partner_accepted_at = timezone.now()
+
         booking.save()
         
         # Return updated booking

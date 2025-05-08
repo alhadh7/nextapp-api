@@ -1,0 +1,6 @@
+# windows
+
+celery -A Next_App worker --loglevel=info --pool=solo  
+celery -A Next_App beat --loglevel=info 
+
+# render 
