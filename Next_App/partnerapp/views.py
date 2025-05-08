@@ -549,7 +549,9 @@ class AcceptBookingView(APIView):
             # Send notification to the customer who created the booking
             # You can use the customer's FCM token to send a notification
             if booking.user:
-                customer_tokens = FCMToken.objects.filter(user=booking.user)
+                # customer_tokens = FCMToken.objects.filter(user=booking.user)
+                customer_tokens = booking.user.fcm_tokens.all()  # Get all FCM tokens for the user
+
                 for token in customer_tokens:
                     try:
                         send_push_notification(
