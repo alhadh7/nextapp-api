@@ -769,7 +769,8 @@ class LogoutView(APIView):
             if fcm_token:
                 FCMToken.objects.filter(user=request.user, token=fcm_token).delete()
                 print(f"🗑️ Removed FCM token {fcm_token} for user {request.user.id}")
-
+            else:
+                print('no fcm given')
             return Response({'message': 'Logged out successfully'}, status=status.HTTP_200_OK)
 
         except TokenError as e:
