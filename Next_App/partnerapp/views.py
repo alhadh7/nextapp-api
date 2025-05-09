@@ -533,6 +533,15 @@ class AcceptBookingView(APIView):
                         "error": "You already have a booking on this day that is not completed. Wait until it's finished."
                     }, status=status.HTTP_400_BAD_REQUEST)
                 
+
+            # 🚫 Prevent same partner from accepting the same booking more than once
+            existing_request = BookingRequest.objects.filter(booking=booking, partner=partner).first()
+            if existing_request and existing_request.status == 'accepted':
+                return Response({
+                    "error": "You have already accepted this booking."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+
             # ✅ Safe to accept
             # Create a booking request from this partner
             booking_request, created = BookingRequest.objects.get_or_create(
