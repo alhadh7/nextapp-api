@@ -733,6 +733,22 @@ class RefreshTokenView(APIView):
 
 
 # Logout API
+# class LogoutView(APIView):
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated]
+    
+#     def post(self, request):
+#         try:
+#             refresh_token = request.data.get('refresh')
+#             if refresh_token:
+#                 token = RefreshToken(refresh_token)
+#                 token.blacklist()
+#                 return Response({'message': 'Logged out successfully'}, status=status.HTTP_200_OK)
+#             else:
+#                 return Response({'error': 'Refresh token is required'}, status=status.HTTP_400_BAD_REQUEST)
+#         except TokenError as e:
+#             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
 class LogoutView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -740,15 +756,26 @@ class LogoutView(APIView):
     def post(self, request):
         try:
             refresh_token = request.data.get('refresh')
+            fcm_token = request.data.get('fcm_token')  # 🆕 optional token from frontend
+
+            # Blacklist refresh token
             if refresh_token:
                 token = RefreshToken(refresh_token)
                 token.blacklist()
-                return Response({'message': 'Logged out successfully'}, status=status.HTTP_200_OK)
             else:
                 return Response({'error': 'Refresh token is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Remove FCM token from DB
+            if fcm_token:
+                FCMToken.objects.filter(user=request.user, token=fcm_token).delete()
+                print(f"🗑️ Removed FCM token {fcm_token} for user {request.user.id}")
+
+            return Response({'message': 'Logged out successfully'}, status=status.HTTP_200_OK)
+
         except TokenError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
+
+
 
 
 from rest_framework import status, permissions
