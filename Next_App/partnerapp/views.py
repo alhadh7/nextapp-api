@@ -555,11 +555,12 @@ class AcceptBookingView(APIView):
                 for token in customer_tokens:
                     try:
                         send_push_notification(
-                            booking.user,
-                            "Booking Accepted",
-                            f"Your booking {booking.id} has been accepted by {partner.full_name}.",
-                            "booking_accepted",  # Optional, you can use this to track the notification type in the app
+                                user=booking.user,
+                                title="Booking Accepted",
+                                body=f"Your booking {booking.id} has been accepted by {partner.full_name}.",
+                                data={"type": "booking_accepted"}
                         )
+
                     except Exception as e:
                         logger.warning(f"FCM error for user {booking.user.id}: {str(e)}")
 
