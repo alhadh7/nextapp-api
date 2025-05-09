@@ -106,12 +106,23 @@ WSGI_APPLICATION = "Next_App.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.sqlite3",
+#         "NAME": BASE_DIR / "db.sqlite3",
+#     }
+# }
+
+import dj_database_url
+import os
+
+
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
-    }
+    "default": dj_database_url.config(
+        default="postgresql://next_app_postgres_user:noxIo6uphCiYJ7KNnzGW24APo8O99Pfi@dpg-d0ep2h95pdvs73atou50-a.oregon-postgres.render.com/next_app_postgres"
+    )
 }
+
 
 
 # Password validation
@@ -186,7 +197,8 @@ ALLOWED_HOSTS = [
     'https://*.ngrok-free.app',  # Wildcard for ngrok-free.app
     '127.0.0.1',
     '.ngrok-free.app',
-    'nextapp-api.onrender.com'
+    'nextapp-api.onrender.com',
+    'nextapp-api-production.up.railway.app'
 ]
 
 
@@ -310,3 +322,4 @@ CELERY_RESULT_BACKEND = 'rpc://'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
+
