@@ -555,7 +555,7 @@ class AcceptBookingView(APIView):
                 for token in customer_tokens:
                     try:
                         send_push_notification(
-                            token.token,  # Customer's FCM token
+                            booking.user,
                             "Booking Accepted",
                             f"Your booking {booking.id} has been accepted by {partner.full_name}.",
                             "booking_accepted",  # Optional, you can use this to track the notification type in the app
