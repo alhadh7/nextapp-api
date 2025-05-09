@@ -548,21 +548,16 @@ class AcceptBookingView(APIView):
 
             # Send notification to the customer who created the booking
             # You can use the customer's FCM token to send a notification
-            if booking.user:
-                # customer_tokens = FCMToken.objects.filter(user=booking.user)
-                customer_tokens = booking.user.fcm_tokens.all()  # Get all FCM tokens for the user
-                print('customer tokens:',customer_tokens)
-                for token in customer_tokens:
+                if booking.user:
                     try:
                         send_push_notification(
-                                user=booking.user,
-                                title="Booking Accepted",
-                                body=f"Your booking {booking.id} has been accepted by {partner.full_name}.",
-                                data={"type": "booking_accepted"}
+                            user=booking.user,
+                            title="Booking Accepted",
+                            body=f"Your booking {booking.id} has been accepted by {partner.full_name}.",
+                            data={"type": "booking_accepted"}
                         )
-
                     except Exception as e:
-                        logger.warning(f"FCM error for user {booking.user.id}: {str(e)}")
+                        logger.warning(f"⚠️ FCM error for user {booking.user.id}: {str(e)}")
 
             serializer = BookingRequestSerializer(booking_request)
             return Response(serializer.data, status=status.HTTP_200_OK)
