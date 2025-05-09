@@ -666,6 +666,7 @@ class RequestBookingExtensionView(APIView):
             # ✅ Send notification to the partner
             if booking.partner and booking.partner.user:
                 try:
+                    print('partner data:',booking.partner.user)
                     send_push_notification(
                         user=booking.partner.user,
                         title="Extension Requested",
