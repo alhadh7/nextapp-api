@@ -5,6 +5,20 @@ from rest_framework.response import Response
 # from pyfcm import FCMNotification
 from .models import FCMToken
 
+# class SaveFCMTokenView(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def post(self, request):
+#         token = request.data.get('fcm_token')
+#         if not token:
+#             return Response({'error': 'Token is required'}, status=400)
+
+#         # Save the FCM token to the database, or skip if it already exists
+#         FCMToken.objects.get_or_create(user=request.user, token=token)
+#         return Response({'message': 'Token saved'}, status=200)
+
+from django.db import IntegrityError
+
 class SaveFCMTokenView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -13,9 +27,16 @@ class SaveFCMTokenView(APIView):
         if not token:
             return Response({'error': 'Token is required'}, status=400)
 
-        # Save the FCM token to the database, or skip if it already exists
-        FCMToken.objects.get_or_create(user=request.user, token=token)
-        return Response({'message': 'Token saved'}, status=200)
+        try:
+            # Attempt to get or create the token
+            fcm_token, created = FCMToken.objects.get_or_create(user=request.user, token=token)
+            if created:
+                return Response({'message': 'Token saved'}, status=200)
+            else:
+                return Response({'message': 'Token already exists'}, status=200)
+        except IntegrityError:
+            # Handle case where duplicate key error occurs
+            return Response({'error': 'Duplicate token entry'}, status=400)
 
 
 # Updated FCM configuration
