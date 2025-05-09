@@ -288,5 +288,8 @@ class Transaction(models.Model):
 # models.py
 class FCMToken(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='fcm_tokens')
-    token = models.CharField(max_length=255, unique=True)
+    token = models.CharField(max_length=255)  # Removed unique=True
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ('user', 'token')  # Only prevent duplicate user-token pairs

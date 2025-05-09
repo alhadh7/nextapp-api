@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 # from pyfcm import FCMNotification
 from .models import FCMToken
+from rest_framework import status
 
 # class SaveFCMTokenView(APIView):
 #     permission_classes = [IsAuthenticated]
@@ -26,6 +27,10 @@ class SaveFCMTokenView(APIView):
         token = request.data.get('fcm_token')
         if not token:
             return Response({'error': 'Token is required'}, status=400)
+
+        if FCMToken.objects.filter(user=request.user, token=token).exists():
+            return Response({'error': 'Token already exists for this user'}, status=status.HTTP_409_CONFLICT)
+
 
         try:
             # Attempt to get or create the token
