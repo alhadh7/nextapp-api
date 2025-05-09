@@ -30,6 +30,9 @@ class SaveFCMTokenView(APIView):
         try:
             # Attempt to get or create the token
             fcm_token, created = FCMToken.objects.get_or_create(user=request.user, token=token)
+            print(f"Saving FCM token for user {request.user.id}: {token}")
+            print(f"Current tokens: {FCMToken.objects.filter(user=request.user)}")
+
             if created:
                 return Response({'message': 'Token saved'}, status=200)
             else:
