@@ -101,7 +101,11 @@ def send_push_notification(user, title, body, data=None):
     if not tokens:
         print(f"⚠️ No tokens found for user {user}")
         return
+    tokens = set(tokens)  # ✅ Deduplicate tokens here
 
+    if not tokens:
+        print(f"⚠️ No tokens found for user {user}")
+        return
     for token in tokens:
         try:
             message = messaging.Message(
