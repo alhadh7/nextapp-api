@@ -317,7 +317,7 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
 ]
 
 
-CELERY_BROKER_URL = 'amqp://guest:guest@localhost//'
+CELERY_BROKER_URL = 'amqp://MoQWWpOq1hwPzU6Y:yEmLK-sqHpFdR~cCvYQngcE_D4FxsYA3@trolley.proxy.rlwy.net:15201'
 CELERY_RESULT_BACKEND = 'rpc://'
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
