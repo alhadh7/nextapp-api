@@ -642,7 +642,8 @@ class RequestBookingExtensionView(APIView):
             user=request.user,
             status='in_progress'
         )
-    
+
+
         # ❌ Check if there's an existing extension that is not rejected
         existing_active_extension = booking.extensions.filter(
             status__in=['pending', 'approved']
@@ -653,6 +654,17 @@ class RequestBookingExtensionView(APIView):
                 {"error": "An extension request already exists for this booking."},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+        # ⛔ Prevent requesting extension if <15 min remain from expected end time
+        if booking.work_started_at:
+            expected_end_time = booking.work_started_at + timedelta(hours=booking.hours)
+            time_remaining = expected_end_time - timezone.now()
+            if time_remaining < timedelta(minutes=15):
+                return Response(
+                    {"error": "You can no longer request an extension. Please request at least 15 minutes before the expected end of the job."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
 
         # Add the 'booking' object to the incoming request data
         request.data['booking'] = booking.id  # Use the booking's ID in the request data

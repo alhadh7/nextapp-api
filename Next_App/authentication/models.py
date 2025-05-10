@@ -222,7 +222,10 @@ class BookingExtension(models.Model):
     additional_hours = models.PositiveIntegerField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     requested_at = models.DateTimeField(auto_now_add=True)
-    
+
+    partner_accepted_at = models.DateTimeField(null=True, blank=True)
+
+
     # Payment for extension
     extension_amount = models.DecimalField(max_digits=10, decimal_places=2)
     payment_status = models.CharField(max_length=20, default='pending')

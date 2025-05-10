@@ -785,6 +785,11 @@ class RespondToExtensionRequestView(APIView):
             
             # Update extension status
             extension.status = 'approved' if response == 'approve' else 'rejected'
+
+            # If approved, set the partner_accepted_at timestamp
+            if response == 'approve':
+                extension.partner_accepted_at = timezone.now()
+
             extension.save()
             
             serializer = BookingExtensionSerializer(extension)
