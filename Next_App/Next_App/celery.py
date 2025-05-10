@@ -20,7 +20,7 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     'auto-cancel-bookings-every-5-minutes': {
         'task': 'authentication.tasks.auto_cancel_bookings',  # Path to your task
-        'schedule': crontab(minute='*/5'),  # Every 5 minutes
+        'schedule': crontab(minute='*/1'),  # Every 5 minutes
     },
 }
 
