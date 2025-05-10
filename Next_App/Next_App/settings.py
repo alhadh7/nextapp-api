@@ -116,13 +116,25 @@ WSGI_APPLICATION = "Next_App.wsgi.application"
 import dj_database_url
 import os
 
-
+#  test render db
 DATABASES = {
     "default": dj_database_url.config(
         default="postgresql://next_app_postgres_user:noxIo6uphCiYJ7KNnzGW24APo8O99Pfi@dpg-d0ep2h95pdvs73atou50-a.oregon-postgres.render.com/next_app_postgres"
     )
 }
 
+
+# for docker setup
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "django.db.backends.postgresql",
+#         "NAME": "your_db",
+#         "USER": "your_user",
+#         "PASSWORD": "your_password",
+#         "HOST": "db",  # matches the service name in docker-compose
+#         "PORT": "5432",
+#     }
+# }
 
 
 # Password validation
@@ -316,6 +328,7 @@ CORS_ALLOW_HEADERS = list(default_headers) + [
     'ngrok-skip-browser-warning',
 ]
 
+# for test railway rabbitmq
 
 CELERY_BROKER_URL = 'amqp://MoQWWpOq1hwPzU6Y:yEmLK-sqHpFdR~cCvYQngcE_D4FxsYA3@trolley.proxy.rlwy.net:15201'
 CELERY_RESULT_BACKEND = 'rpc://'
@@ -323,3 +336,10 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
+# for docker rabbit mq
+
+# CELERY_BROKER_URL = "amqp://user:password@rabbitmq:5672//"
+# CELERY_RESULT_BACKEND = "rpc://"
+# CELERY_ACCEPT_CONTENT = ["json"]
+# CELERY_TASK_SERIALIZER = "json"
+# CELERY_TIMEZONE = "UTC"
