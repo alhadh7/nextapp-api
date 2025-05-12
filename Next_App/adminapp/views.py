@@ -722,7 +722,7 @@ from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
 from django.db import transaction as db_transaction
 import razorpay
-from .models import Booking, Transaction
+from authentication.models import Booking, Transaction
 
 # Razorpay client
 razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
