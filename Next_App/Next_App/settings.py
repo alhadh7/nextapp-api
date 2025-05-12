@@ -95,6 +95,9 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                
+                'adminapp.context_processors.stuck_paid_notifications',
+
             ],
         },
     },
@@ -343,3 +346,7 @@ CELERY_TIMEZONE = 'UTC'
 # CELERY_ACCEPT_CONTENT = ["json"]
 # CELERY_TASK_SERIALIZER = "json"
 # CELERY_TIMEZONE = "UTC"
+
+
+# DEFAULT_FROM_EMAIL = 'no-reply@yourdomain.com'
+# ADMIN_EMAIL = 'admin@yourdomain.com'  # or use multiple emails if needed

@@ -1,0 +1,104 @@
+{% extends 'adminapp/base.html' %}
+{% block title %}Stuck Paid Bookings{% endblock %}
+{% block header %}🚨 Unassigned Paid Bookings (30+ min old){% endblock %}
+
+{% block content %}
+<div class="mb-6">
+    <h2 class="text-2xl font-semibold text-red-600">Stuck Paid Bookings</h2>
+    <p class="text-sm text-gray-600">These bookings were paid but no partner accepted them in time. You can assign one manually.</p>
+</div>
+
+{% if page_obj.object_list %}
+<div class="overflow-x-auto bg-white rounded shadow">
+    <table class="min-w-full text-sm text-left">
+        <thead class="bg-gray-100 text-gray-600 uppercase">
+            <tr>
+                <th class="py-3 px-4 border-b">ID</th>
+                <th class="py-3 px-4 border-b">User</th>
+                <th class="py-3 px-4 border-b">Service</th>
+                <th class="py-3 px-4 border-b">Created At</th>
+                <th class="py-3 px-4 border-b">Scheduled</th>
+                <th class="py-3 px-4 border-b text-center">Assign Partner</th>
+                <th class="py-3 px-4 border-b text-center">Cancel Booking</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            {% for booking in page_obj %}
+            <tr class="hover:bg-gray-50">
+                <td class="py-2 px-4 border-b">{{ booking.id }}</td>
+                <td class="py-2 px-4 border-b">{{ booking.user.full_name }}</td>
+                <td class="py-2 px-4 border-b">{{ booking.service_type.name }}</td>
+                <td class="py-2 px-4 border-b">{{ booking.created_at|date:"Y-m-d H:i" }}</td>
+                <td class="py-2 px-4 border-b">{{ booking.scheduled_date }}</td>
+                <td class="py-2 px-4 border-b text-center">
+                    <button 
+                        onclick="document.getElementById('assignModal{{ booking.id }}').showModal()" 
+                        class="text-yellow-600 hover:underline">Assign</button>
+                </td>
+
+                <td class="py-2 px-4 border-b text-center">
+                <form method="post" action="{% url 'adminapp:refund_booking' booking.id %}" onsubmit="return confirm('Are you sure you want to refund and cancel this booking?');">
+                    {% csrf_token %}
+                    <button type="submit" class="text-red-600 hover:underline">Refund</button>
+                </form>
+                </td>
+
+            </tr>
+
+            <!-- Assignment Modal -->
+            <dialog id="assignModal{{ booking.id }}" class="rounded-md w-full max-w-md">
+                <div class="bg-white p-6 rounded shadow">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold">Assign Partner to Booking #{{ booking.id }}</h3>
+                        <form method="dialog">
+                            <button class="text-xl">&times;</button>
+                        </form>
+                    </div>
+                    <form method="post" action="{% url 'adminapp:assign_partner' booking.id %}">
+                        {% csrf_token %}
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-1">Select Partner</label>
+                            <select name="partner_id" class="w-full border rounded px-3 py-2" required>
+                                {% for partner in partners %}
+                                <option value="{{ partner.id }}">{{ partner.full_name }} ({{ partner.phone_number }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="flex justify-end space-x-2">
+                            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                                Assign
+                            </button>
+                            <form method="dialog">
+                                <button type="submit" class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Cancel</button>
+                            </form>
+
+                        </div>
+                    </form>
+                
+                    
+                </div>
+            </dialog>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Pagination -->
+<div class="mt-4 flex justify-between items-center text-sm text-gray-600">
+    <div>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</div>
+    <div class="space-x-2">
+        {% if page_obj.has_previous %}
+            <a href="?page=1" class="hover:underline">&laquo; First</a>
+            <a href="?page={{ page_obj.previous_page_number }}" class="hover:underline">Previous</a>
+        {% endif %}
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}" class="hover:underline">Next</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}" class="hover:underline">Last &raquo;</a>
+        {% endif %}
+    </div>
+</div>
+{% else %}
+<p class="text-gray-500 mt-6">No stuck paid bookings found.</p>
+{% endif %}
+{% endblock %}

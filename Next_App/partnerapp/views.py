@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -391,16 +392,18 @@ class AvailableBookingsView(APIView):
                     "error": "Access denied. You must be a verified partner to view available bookings."
                 }, status=status.HTTP_403_FORBIDDEN)
 
+
+            # legacy cancel
             # Auto-cancel expired unassigned bookings (older than 30 min)
-            cutoff_time = timezone.now() - timedelta(minutes=30)
-            expired_bookings = Booking.objects.filter(
-                status='pending',
-                partner__isnull=True,
-                created_at__lte=cutoff_time
-            )
-            for booking in expired_bookings:
-                booking.status = 'cancelled'
-                booking.save()
+            # cutoff_time = timezone.now() - timedelta(minutes=30)
+            # expired_bookings = Booking.objects.filter(
+            #     status='pending',
+            #     partner__isnull=True,
+            #     created_at__lte=cutoff_time
+            # )
+            # for booking in expired_bookings:
+            #     booking.status = 'cancelled'
+            #     booking.save()
 
 
             now = timezone.localtime()
@@ -467,6 +470,12 @@ class AvailableBookingsView(APIView):
                 if same_day_bookings.exists():
                     if not all(b.status == 'completed' and b.work_ended_at for b in same_day_bookings):
                         continue
+
+                # Rule 3: Exclude bookings the partner already accepted
+                if BookingRequest.objects.filter(booking=booking, partner=partner, status='accepted').exists():
+                    continue
+
+
 
                 valid_bookings.append(booking)
 
@@ -541,6 +550,14 @@ class AcceptBookingView(APIView):
                     "error": "You have already accepted this booking."
                 }, status=status.HTTP_400_BAD_REQUEST)
 
+            # Prevent re-acceptance by the partner who released it
+            if booking.released_by == partner:
+                return Response({
+                    "error": "You previously released this booking. It cannot be accepted again."
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+
+
 
             # ✅ Safe to accept
             # Create a booking request from this partner
@@ -554,6 +571,17 @@ class AcceptBookingView(APIView):
                 # Update the status if it already exists
                 booking_request.status = 'accepted'
                 booking_request.save()
+
+            if booking.released_by:
+                # ✅ Assign partner and confirm the booking
+                booking.partner = partner
+                booking.status = 'confirmed'
+
+                # Ensure the partner accepted the booking
+                booking.partner_accepted_at = timezone.now()
+                
+                # Save the changes
+                booking.save()
 
             # Send notification to the customer who created the booking
             # You can use the customer's FCM token to send a notification
@@ -575,6 +603,43 @@ class AcceptBookingView(APIView):
             return Response({
                 "error": "Partner not found."
             }, status=status.HTTP_404_NOT_FOUND)
+
+
+class ReleaseBookingView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, booking_id):
+        is_partner = self.request.auth.get('is_partner', False)
+        if not is_partner:
+            return Response({"error": "Only partners can perform this action."}, status=403)
+
+        try:
+            partner = Partner.objects.get(id=request.user.id)
+            booking = get_object_or_404(Booking, id=booking_id, partner=partner)
+
+            # Prevent release after work has started or completed
+            if booking.status in ['in_progress', 'completed']:
+                return Response({"error": "Cannot release a booking that is already in progress or completed."}, status=400)
+
+            BookingRequest.objects.filter(booking=booking, partner=partner).update(status='released')
+
+            # Release the booking
+            booking.partner = None
+            booking.status = 'pending'  # Reset to pending so it's available again
+            booking.released_by = request.user  # or the Partner instance
+            booking.released_at = timezone.now()
+
+            booking.save()
+
+            # Optionally notify admin or other partners
+            # notify_admin_booking_released(booking)
+
+            return Response({"message": "Booking released and made available to other partners."}, status=200)
+
+        except Partner.DoesNotExist:
+            return Response({"error": "Partner not found."}, status=404)
+
 
 class PartnerActiveBookingsView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -697,7 +762,16 @@ class ToggleWorkStatusView(APIView):
                 booking.status = 'completed'
                 booking.work_ended_at = timezone.now()
                 booking.save()
-
+                # Update partner wallet only after work is completed
+                if booking.partner:
+                    try:
+                        total_earning = booking.total_amount * Decimal('0.75')
+                        wallet, created = PartnerWallet.objects.get_or_create(partner=booking.partner)
+                        wallet.balance += total_earning
+                        wallet.save()
+                    except Exception as e:
+                        logger.error(f"Failed to update partner wallet after work completion: {str(e)}")
+                        
                 try:
                     send_push_notification(
                         user=booking.user,

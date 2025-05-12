@@ -74,7 +74,7 @@
                     </div>
 
                     <!-- Body -->
-                    <div class="mt-4 space-y-3 text-sm md:text-base text-gray-700">
+                    {% comment %} <div class="mt-4 space-y-3 text-sm md:text-base text-gray-700">
                         <p><span class="font-semibold">User:</span> {{ booking.user.full_name }}</p>
                         <p><span class="font-semibold">Service:</span> {{ booking.service_type }}</p>
                         <p><span class="font-semibold">Partner:</span> {{ booking.partner.full_name|default:"Not Assigned" }}</p>
@@ -84,7 +84,57 @@
                         <p><span class="font-semibold">Notes:</span> {{ booking.notes|default:"No additional notes" }}</p>
                         <p><span class="font-semibold">Total Amount:</span> ₹{{ booking.total_amount|default:"0.00" }}</p>
                         <p><span class="font-semibold">Payment Status:</span> <span class="capitalize">{{ booking.payment_status }}</span></p>
-                    </div>
+                    </div> {% endcomment %}
+
+<!-- Body -->
+<div class="mt-4 space-y-3 text-sm md:text-base text-gray-700">
+    <p><span class="font-semibold">User:</span> {{ booking.user.full_name }}</p>
+    <p><span class="font-semibold">Service:</span> {{ booking.service_type }}</p>
+    <p><span class="font-semibold">Partner:</span> {{ booking.partner.full_name|default:"Not Assigned" }}</p>
+    <p><span class="font-semibold">Partner Type:</span> {{ booking.get_partner_type_display }}</p>
+    <p><span class="font-semibold">Is Instant Booking:</span> {{ booking.is_instant|yesno:"Yes,No" }}</p>
+    <p><span class="font-semibold">Hours:</span> {{ booking.hours }}</p>
+    <p><span class="font-semibold">Scheduled Date:</span> {{ booking.scheduled_date|date:"M d, Y" }}</p>
+    <p><span class="font-semibold">Scheduled Time:</span> {{ booking.scheduled_time|time:"H:i" }}</p>
+    <p><span class="font-semibold">Notes:</span> {{ booking.notes|default:"No additional notes" }}</p>
+    <p><span class="font-semibold">User Location:</span> {{ booking.user_location }}</p>
+    <p><span class="font-semibold">Latitude:</span> {{ booking.lang }}</p>
+    <p><span class="font-semibold">Longitude:</span> {{ booking.long }}</p>
+    <p><span class="font-semibold">Hospital Location:</span> {{ booking.hospital_location|default:"N/A" }}</p>
+    <p><span class="font-semibold">Status:</span> <span class="capitalize">{{ booking.status }}</span></p>
+    <p><span class="font-semibold">Created At:</span> {{ booking.created_at|date:"M d, Y H:i" }}</p>
+    <p><span class="font-semibold">Partner Accepted At:</span> {{ booking.partner_accepted_at|default:"Not yet accepted" }}</p>
+    <p><span class="font-semibold">Released By:</span> {{ booking.released_by.full_name|default:"N/A" }}</p>
+    <p><span class="font-semibold">Released At:</span> {{ booking.released_at|default:"N/A" }}</p>
+    <p><span class="font-semibold">Work Started At:</span> {{ booking.work_started_at|default:"N/A" }}</p>
+    <p><span class="font-semibold">Work Ended At:</span> {{ booking.work_ended_at|default:"N/A" }}</p>
+    <p><span class="font-semibold">Total Amount:</span> ₹{{ booking.total_amount|default:"0.00" }}</p>
+    <p><span class="font-semibold">Payment Status:</span> <span class="capitalize">{{ booking.payment_status }}</span></p>
+</div>
+
+<!-- Transactions -->
+<div class="mt-6">
+    <h2 class="text-lg font-semibold text-gray-800 mb-2">Transactions</h2>
+    
+    {% if booking.transactions.all %}
+        <div class="space-y-2 text-sm md:text-base text-gray-700">
+            {% for transaction in booking.transactions.all %}
+                <div class="border p-3 rounded bg-gray-50">
+                    <p><span class="font-semibold">Transaction ID:</span> {{ transaction.id }}</p>
+                    <p><span class="font-semibold">Type:</span> {{ transaction.get_transaction_type_display }}</p>
+                    <p><span class="font-semibold">Amount:</span> ₹{{ transaction.amount }}</p>
+                    <p><span class="font-semibold">Status:</span> <span class="capitalize">{{ transaction.status }}</span></p>
+                    <p><span class="font-semibold">Razorpay Order ID:</span> {{ transaction.razorpay_order_id|default:"N/A" }}</p>
+                    <p><span class="font-semibold">Razorpay Payment ID:</span> {{ transaction.razorpay_payment_id|default:"N/A" }}</p>
+                    <p><span class="font-semibold">Date:</span> {{ transaction.created_at|date:"M d, Y H:i" }}</p>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-gray-500">No transactions available for this booking.</p>
+    {% endif %}
+</div>
+
 
                     <!-- Footer (optional) -->
                     <div class="mt-6 flex justify-end">

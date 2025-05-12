@@ -144,7 +144,7 @@ class RegisterUserView(APIView):
         if not is_partner:
             user_exists = CustomUser.objects.filter(phone_number=phone_number, is_partner=False).exists()
             if user_exists:
-                return Response({"error": "A normal user with this phone number already exists."}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"error": "This user already exists."}, status=status.HTTP_400_BAD_REQUEST)
             
         retry_count = cache.get(f'otp_retry_{phone_number}', 0)
         if retry_count >= 3:

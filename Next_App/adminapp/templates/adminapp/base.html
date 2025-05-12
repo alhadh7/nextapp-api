@@ -47,6 +47,15 @@
                             <span>Bookings</span>
                         </a>
                     </li>
+
+                    <!-- 🔔 New menu item for stuck bookings -->
+                    <li class="mb-2">
+                        <a href="{% url 'adminapp:stuck_paid_bookings' %}" class="flex items-center p-2 rounded hover:bg-gray-700 text-yellow-400">
+                            <i class="fas fa-exclamation-triangle w-6"></i>
+                            <span>Stuck Paid Bookings</span>
+                        </a>
+                    </li>
+
                     <li class="mb-2">
                         <a href="{% url 'adminapp:service_list' %}" class="flex items-center p-2 rounded hover:bg-gray-700">
                             <i class="fas fa-concierge-bell w-6"></i>
@@ -69,12 +78,54 @@
             <header class="bg-white shadow">
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
                     <h1 class="text-xl font-semibold">{% block header %}Dashboard{% endblock %}</h1>
-                    <div class="flex items-center">
+                    {% comment %} <div class="flex items-center">
+                        <span class="mr-2">{{ user.full_name }}</span>
+                        <button class="rounded-full h-8 w-8 bg-gray-200 flex items-center justify-center">
+                            <i class="fas fa-user"></i>
+                        </button>
+                    </div> {% endcomment %}
+                    <div class="flex items-center space-x-4">
+                        <!-- Notification Bell -->
+                        <div class="relative group">
+                            <button class="relative text-gray-700 hover:text-yellow-600 focus:outline-none">
+                                <i class="fas fa-bell text-xl"></i>
+                                {% if stuck_paid_bookings_count > 0 %}
+                                <span class="absolute -top-2 -right-2 inline-flex items-center justify-center px-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                                    {{ stuck_paid_bookings_count }}
+                                </span>
+                                {% endif %}
+                            </button>
+                    
+                            <!-- Dropdown -->
+                            <div class="absolute right-0 mt-2 w-72 bg-white border rounded shadow-lg hidden group-hover:block z-50">
+                                <div class="p-3 border-b font-semibold text-gray-800">Notifications</div>
+                                {% if stuck_paid_bookings_count > 0 %}
+                                    <ul class="max-h-60 overflow-y-auto">
+                                        {% for booking in stuck_paid_bookings %}
+                                            <li class="px-4 py-2 hover:bg-gray-100">
+                                                <a href="{% url 'adminapp:booking_detail' booking.id %}" class="text-sm text-blue-600 hover:underline">
+                                                    ID {{ booking.id }} - {{ booking.user.full_name }}
+                                                </a>
+                                                <p class="text-xs text-gray-500">{{ booking.scheduled_date }}</p>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                    <div class="p-2 text-right">
+                                        <a href="{% url 'adminapp:stuck_paid_bookings' %}" class="text-sm text-blue-600 hover:underline">View all</a>
+                                    </div>
+                                {% else %}
+                                    <div class="p-4 text-sm text-gray-500">No Notifications</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    
+                        <!-- User profile -->
                         <span class="mr-2">{{ user.full_name }}</span>
                         <button class="rounded-full h-8 w-8 bg-gray-200 flex items-center justify-center">
                             <i class="fas fa-user"></i>
                         </button>
                     </div>
+                    
                 </div>
             </header>
             

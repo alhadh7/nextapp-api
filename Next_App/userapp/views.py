@@ -1055,17 +1055,18 @@ class RazorPayWebhookView(APIView):
                             )
                         except Exception as e:
                             logger.warning(f"Error sending active booking notification for booking #{booking.id}: {e}")
-
+                        
+                        # legacy
                         # Update partner wallet
-                        if booking.partner:
-                            try:
-                                partner_amount = booking.total_amount * Decimal('0.75')
-                                wallet, created = PartnerWallet.objects.get_or_create(partner=booking.partner)
-                                wallet.balance += partner_amount
-                                wallet.save()
-                            except Exception as e:
-                                logger.error(f"Failed to update partner wallet: {str(e)}")
-                                # Continue processing as this shouldn't fail the transaction
+                        # if booking.partner:
+                        #     try:
+                        #         partner_amount = booking.total_amount * Decimal('0.75')
+                        #         wallet, created = PartnerWallet.objects.get_or_create(partner=booking.partner)
+                        #         wallet.balance += partner_amount
+                        #         wallet.save()
+                        #     except Exception as e:
+                        #         logger.error(f"Failed to update partner wallet: {str(e)}")
+                        #         # Continue processing as this shouldn't fail the transaction
                                 
                     elif transaction.extension:
                         extension = transaction.extension
@@ -1088,15 +1089,16 @@ class RazorPayWebhookView(APIView):
                         except Exception as e:
                             logger.warning(f"Failed to send extension confirmation notification for booking #{booking.id}: {e}")
 
-                        # Update partner wallet
-                        if booking.partner:
-                            try:
-                                partner_amount = extension.extension_amount * Decimal('0.75')
-                                wallet, created = PartnerWallet.objects.get_or_create(partner=booking.partner)
-                                wallet.balance += partner_amount
-                                wallet.save()
-                            except Exception as e:
-                                logger.error(f"Failed to update partner wallet: {str(e)}")
+                        # legacy
+                        # Update partner wallet 
+                        # if booking.partner:
+                        #     try:
+                        #         partner_amount = extension.extension_amount * Decimal('0.75')
+                        #         wallet, created = PartnerWallet.objects.get_or_create(partner=booking.partner)
+                        #         wallet.balance += partner_amount
+                        #         wallet.save()
+                        #     except Exception as e:
+                        #         logger.error(f"Failed to update partner wallet: {str(e)}")
                 
             except Transaction.DoesNotExist:
                 logger.error(f"Transaction not found for order_id: {order_id}")

@@ -605,6 +605,49 @@ def booking_list(request):
 from django.shortcuts import render, get_object_or_404, redirect
 from authentication.models import Booking
 from .forms import BookingForm  # You will need to create this form if not already created
+from datetime import timedelta
+
+
+
+@admin_required
+def stuck_paid_bookings(request):
+    """View for paid bookings pending for more than 30 minutes without a partner"""
+    thirty_minutes_ago = timezone.now() - timedelta(minutes=30)
+    
+    stuck_bookings = Booking.objects.filter(
+        status='pending',
+        payment_status='paid',
+        partner__isnull=True,
+        released_at__lt=thirty_minutes_ago
+    ).order_by('-created_at')
+
+    partners = Partner.objects.filter(is_active=True).order_by('full_name')  # adjust logic as needed
+
+    paginator = Paginator(stuck_bookings, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj': page_obj,
+        'partners': partners,  # ✅ pass partners list to template
+    }
+
+    return render(request, 'adminapp/stuck_paid_bookings.html', context)
+
+
+@admin_required
+def assign_partner(request, booking_id):
+    booking = get_object_or_404(Booking, id=booking_id, partner__isnull=True, payment_status='paid')
+    partner_id = request.POST.get('partner_id')
+    partner = get_object_or_404(Partner, id=partner_id)
+
+    booking.partner = partner
+    booking.partner_accepted_at = timezone.now()
+    booking.save()
+
+    messages.success(request, f"Partner {partner.full_name} assigned to booking #{booking.id}.")
+    return redirect('adminapp:stuck_paid_bookings')
+
 
 @admin_required
 def edit_booking(request, booking_id):
@@ -617,11 +660,14 @@ def edit_booking(request, booking_id):
         
         # Update the booking fields
         booking.status = status
-        booking.notes = notes
+        booking.notes = notes   
         booking.save()
         
         # Redirect to the booking list after saving
         return redirect('adminapp:booking_list')
+
+
+
 
     return redirect('adminapp:booking_list')  # In case of a GET request, just redirect back
 
@@ -666,3 +712,37 @@ def service_list(request):
             return redirect('adminapp:service_list')
 
     return render(request, 'adminapp/service_list.html', {'services': services})
+
+
+from authentication.models import Booking, Transaction
+from django.contrib import messages
+from django.views.decorators.http import require_POST
+
+@admin_required
+@require_POST
+def refund_booking(request, booking_id):
+    booking = get_object_or_404(Booking, id=booking_id, partner__isnull=True, status='pending', payment_status='paid')
+
+    transaction = Transaction.objects.filter(
+        booking=booking,
+        transaction_type='booking_payment',
+        status='completed'
+    ).first()
+
+    if not transaction or not transaction.razorpay_payment_id:
+        messages.error(request, "No valid payment found for this booking.")
+        return redirect('adminapp:stuck_paid_bookings')
+
+    # 🧾 TODO: Integrate with Razorpay refund API
+    # refund = razorpay_client.payment.refund(transaction.razorpay_payment_id)
+
+    # For now, simulate refund
+    transaction.status = 'refunded'
+    transaction.save()
+
+    booking.status = 'cancelled'
+    booking.payment_status = 'refunded'
+    booking.save()
+
+    messages.success(request, f"Booking #{booking.id} has been cancelled and marked as refunded.")
+    return redirect('adminapp:stuck_paid_bookings')

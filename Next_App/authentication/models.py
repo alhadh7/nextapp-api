@@ -172,6 +172,12 @@ class Booking(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     partner_accepted_at = models.DateTimeField(null=True, blank=True)
 
+
+    # partner release tracking
+     
+    released_by = models.ForeignKey(Partner, on_delete=models.SET_NULL, null=True, blank=True, related_name='released_bookings')
+    released_at = models.DateTimeField(null=True, blank=True)
+
     work_started_at = models.DateTimeField(null=True, blank=True)
     work_ended_at = models.DateTimeField(null=True, blank=True)
     
@@ -196,6 +202,8 @@ class BookingRequest(models.Model):
         ('pending', 'Pending'),
         ('accepted', 'Accepted'),
         ('rejected', 'Rejected'),
+        ('released', 'Released'),  
+
     )
     
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='requests')
