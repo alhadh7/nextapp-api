@@ -418,7 +418,7 @@ class AvailableBookingsView(APIView):
                 start_time__lte=current_time,
                 end_time__gte=current_time
             ).exists()
-
+            print('active',has_active_slot)
             if not has_active_slot:
                 return Response({
                     "error": "You must have at least one active booked slot to access available bookings."
