@@ -479,8 +479,9 @@ class AvailableBookingsView(APIView):
 
                 valid_bookings.append(booking)
 
+            print(valid_bookings)
 
-            serializer = BookingDetailSerializer(available_bookings, many=True)
+            serializer = BookingDetailSerializer(valid_bookings, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
             
         except Partner.DoesNotExist:
