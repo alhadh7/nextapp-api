@@ -445,9 +445,12 @@ class AvailableBookingsView(APIView):
                 scheduled_date__gte=now.date(),
                 partner__isnull=True
             )
-            
+            print('later',later_bookings)
             # Combine both types
             available_bookings = instant_bookings | later_bookings
+
+            print(available_bookings)
+
 
             # Filter out bookings the partner shouldn't accept
             valid_bookings = []
@@ -479,8 +482,7 @@ class AvailableBookingsView(APIView):
 
                 valid_bookings.append(booking)
 
-            print(valid_bookings)
-
+            print('valid',valid_bookings)
             serializer = BookingDetailSerializer(valid_bookings, many=True)
             return Response(serializer.data, status=status.HTTP_200_OK)
             
@@ -628,7 +630,7 @@ class ReleaseBookingView(APIView):
             # Release the booking
             booking.partner = None
             booking.status = 'pending'  # Reset to pending so it's available again
-            booking.released_by = request.user  # or the Partner instance
+            booking.released_by = request.user.partner # or the Partner instance
             booking.released_at = timezone.now()
 
             booking.save()
