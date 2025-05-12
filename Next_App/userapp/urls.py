@@ -38,4 +38,8 @@ urlpatterns = [
     
     path('razorpay/webhook/', views.RazorPayWebhookView.as_view(), name='razorpay-webhook'),
 
+
+    path('booking/<int:booking_id>/cancel/', views.CancelBookingView.as_view, name='cancel_booking'),
+
+
 ]

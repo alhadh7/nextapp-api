@@ -718,31 +718,62 @@ from authentication.models import Booking, Transaction
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect
+from django.db import transaction as db_transaction
+import razorpay
+from .models import Booking, Transaction
+
+# Razorpay client
+razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
 @admin_required
 @require_POST
 def refund_booking(request, booking_id):
-    booking = get_object_or_404(Booking, id=booking_id, partner__isnull=True, status='pending', payment_status='paid')
+    # Fetch the booking object
+    booking = get_object_or_404(
+        Booking,
+        id=booking_id,
+        partner__isnull=True,
+        status='pending',
+        payment_status='paid'
+    )
 
-    transaction = Transaction.objects.filter(
+    # Get the corresponding transaction
+    txn = Transaction.objects.filter(
         booking=booking,
         transaction_type='booking_payment',
         status='completed'
     ).first()
 
-    if not transaction or not transaction.razorpay_payment_id:
-        messages.error(request, "No valid payment found for this booking.")
+    # Check if the transaction exists and has a valid payment ID
+    if not txn or not txn.razorpay_payment_id:
+        messages.error(request, "No valid Razorpay transaction found.")
         return redirect('adminapp:stuck_paid_bookings')
 
-    # 🧾 TODO: Integrate with Razorpay refund API
-    # refund = razorpay_client.payment.refund(transaction.razorpay_payment_id)
+    try:
+        with db_transaction.atomic():
+            # Request a refund via Razorpay API
+            refund = razorpay_client.payment.refund(txn.razorpay_payment_id, {
+                "amount": int(txn.amount * 100),  # Amount in paise
+                "speed": "optimum"  # Optional: 'optimum' or 'quick'
+            })
 
-    # For now, simulate refund
-    transaction.status = 'refunded'
-    transaction.save()
+            # Update transaction with refund details
+            txn.refund_id = refund['id']
+            txn.refund_status = refund['status']  # This should be 'processed' if successful
+            txn.status = 'refunded'  # Mark the transaction as refunded
+            txn.save()
 
-    booking.status = 'cancelled'
-    booking.payment_status = 'refunded'
-    booking.save()
+            # Update booking status
+            booking.status = 'cancelled'  # Set booking to 'cancelled'
+            booking.payment_status = 'refunded'  # Mark payment as refunded
+            booking.save()
 
-    messages.success(request, f"Booking #{booking.id} has been cancelled and marked as refunded.")
+            messages.success(request, f"Booking #{booking.id} refunded successfully.")
+    except razorpay.errors.BadRequestError as e:
+        messages.error(request, f"Refund failed: {e}")
+    except Exception as e:
+        messages.error(request, f"Unexpected error: {e}")
+
     return redirect('adminapp:stuck_paid_bookings')

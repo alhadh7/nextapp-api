@@ -192,25 +192,25 @@ class CreateBookingView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class CancelBookingView(APIView):
-    permission_classes = [IsAuthenticated]
+# class CancelBookingView(APIView):
+#     permission_classes = [IsAuthenticated]
 
-    def post(self, request, booking_id):
-        try:
-            booking = Booking.objects.get(id=booking_id, user=request.user)
-        except Booking.DoesNotExist:
-            return Response({"error": "Booking not found."}, status=status.HTTP_404_NOT_FOUND)
+#     def post(self, request, booking_id):
+#         try:
+#             booking = Booking.objects.get(id=booking_id, user=request.user)
+#         except Booking.DoesNotExist:
+#             return Response({"error": "Booking not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        if booking.status == 'cancelled':
-            return Response({"message": "Booking is already cancelled."}, status=status.HTTP_200_OK)
+#         if booking.status == 'cancelled':
+#             return Response({"message": "Booking is already cancelled."}, status=status.HTTP_200_OK)
 
-        if booking.status in ['completed', 'in_progress']:
-            return Response({"error": "Cannot cancel a booking that is already in progress or completed."}, status=status.HTTP_400_BAD_REQUEST)
+#         if booking.status in ['completed', 'in_progress']:
+#             return Response({"error": "Cannot cancel a booking that is already in progress or completed."}, status=status.HTTP_400_BAD_REQUEST)
 
-        booking.status = 'cancelled'
-        booking.save()
+#         booking.status = 'cancelled'
+#         booking.save()
 
-        return Response({"message": "Booking has been cancelled due to partner unavailability."}, status=status.HTTP_200_OK)
+#         return Response({"message": "Booking has been cancelled due to partner unavailability."}, status=status.HTTP_200_OK)
 
 
 class PendingBookingListView(generics.ListAPIView):
@@ -858,6 +858,130 @@ class ProcessExtensionPaymentView(APIView):
                 "extension_id": extension.id
             }, status=status.HTTP_400_BAD_REQUEST)
 
+
+from django.shortcuts import get_object_or_404
+from django.contrib import messages
+from django.db import transaction as db_transaction
+from django.utils import timezone
+from datetime import datetime, timedelta
+import razorpay
+
+razorpay_client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+
+class CancelBookingView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, booking_id):
+        booking = get_object_or_404(Booking, id=booking_id, user=request.user)
+
+        # ❌ Block if already started
+        if booking.work_started_at:
+            return Response({"error": "Cannot cancel; service already started."}, status=400)
+
+        # ⏱ Block if within 2 hours of scheduled time
+        if not booking.is_instant and booking.scheduled_date and booking.scheduled_time:
+            scheduled_dt = timezone.make_aware(
+                datetime.combine(booking.scheduled_date, booking.scheduled_time),
+                timezone.get_current_timezone()
+            )
+            if scheduled_dt - timezone.now() < timedelta(hours=2):
+                return Response({"error": "Cancellations must be made at least 2 hours before start."}, status=400)
+
+        # 🟡 If unpaid
+        if booking.payment_status == 'pending':
+            booking.status = 'cancelled'
+            booking.save()
+            return Response({"message": f"Booking #{booking.id} cancelled (no payment made)."}, status=200)
+
+        # ✅ Paid and eligible for refund
+        if booking.payment_status == 'paid' and booking.status == 'confirmed' and booking.partner:
+            txn = Transaction.objects.filter(
+                booking=booking,
+                transaction_type='booking_payment',
+                status='completed'
+            ).first()
+
+            if not txn or not txn.razorpay_payment_id:
+                return Response({"error": "Valid payment not found."}, status=400)
+
+            try:
+                with db_transaction.atomic():
+                    # Refund
+                    refund = razorpay_client.payment.refund(txn.razorpay_payment_id, {
+                        "amount": int(txn.amount * 100),
+                        "speed": "optimum"
+                    })
+
+                    # Update transaction
+                    txn.status = 'refunded'
+                    txn.refund_id = refund.get('id')
+                    txn.refund_status = refund.get('status')
+                    txn.save()
+
+                    # Update booking
+                    booking.status = 'cancelled'
+                    booking.payment_status = 'refunded'
+                    booking.save()
+
+                    # Notify partner
+                    send_push_notification(
+                        user=booking.partner,
+                        title="Booking Cancelled",
+                        body=f"User cancelled booking #{booking.id}.",
+                        data={"booking_id": str(booking.id), "status": "cancelled"}
+                    )
+
+                    return Response({"message": f"Booking #{booking.id} refunded and cancelled."}, status=200)
+
+            except razorpay.errors.BadRequestError as e:
+                return Response({"error": f"Refund failed: {str(e)}"}, status=400)
+            except Exception as e:
+                return Response({"error": f"Unexpected error: {str(e)}"}, status=500)
+
+
+        # ✅ If partner released and no new one assigned, allow refund
+        if (
+            booking.payment_status == 'paid' and
+            booking.status == 'pending' and
+            booking.partner is None and
+            booking.released_by is not None
+        ):
+            txn = Transaction.objects.filter(
+                booking=booking,
+                transaction_type='booking_payment',
+                status='completed'
+            ).first()
+
+            if not txn or not txn.razorpay_payment_id:
+                return Response({"error": "Valid payment not found."}, status=400)
+
+            try:
+                with db_transaction.atomic():
+                    refund = razorpay_client.payment.refund(txn.razorpay_payment_id, {
+                        "amount": int(txn.amount * 100),
+                        "speed": "optimum"
+                    })
+
+                    txn.status = 'refunded'
+                    txn.refund_id = refund.get('id')
+                    txn.refund_status = refund.get('status')
+                    txn.save()
+
+                    booking.status = 'cancelled'
+                    booking.payment_status = 'refunded'
+                    booking.save()
+
+                    return Response({"message": f"Booking #{booking.id} refunded and cancelled."}, status=200)
+
+            except razorpay.errors.BadRequestError as e:
+                return Response({"error": f"Refund failed: {str(e)}"}, status=400)
+            except Exception as e:
+                return Response({"error": f"Unexpected error: {str(e)}"}, status=500)
+
+
+
+        return Response({"error": "Booking cannot be cancelled at this stage."}, status=400)
+
 # class CancelBookingView(APIView):
 #     authentication_classes = [JWTAuthentication]
 #     permission_classes = [IsAuthenticated]
@@ -1102,7 +1226,7 @@ class RazorPayWebhookView(APIView):
                 
             except Transaction.DoesNotExist:
                 logger.error(f"Transaction not found for order_id: {order_id}")
-                
+
         elif event == 'payment.failed':
             # Payment failed
             payment_id = webhook_data['payload']['payment']['entity']['id']
@@ -1134,6 +1258,33 @@ class RazorPayWebhookView(APIView):
             except Transaction.DoesNotExist:
                 logger.error(f"Transaction not found for order_id: {order_id}")
         
+
+        elif event == 'refund.processed':
+            refund_data = webhook_data['payload']['refund']['entity']
+            payment_id = refund_data['payment_id']
+            refund_id = refund_data['id']
+            amount = Decimal(refund_data['amount']) / 100
+
+            try:
+                txn = Transaction.objects.get(razorpay_payment_id=payment_id)
+
+                if txn.status != 'refunded':
+                    txn.status = 'refunded'
+                    txn.save()
+
+                    # Optional: update booking status too
+                    if txn.booking:
+                        booking = txn.booking
+                        booking.status = 'cancelled'
+                        booking.payment_status = 'refunded'
+                        booking.save()
+
+                    logger.info(f"Refund processed for txn {txn.id}, refund_id: {refund_id}")
+
+            except Transaction.DoesNotExist:
+                logger.error(f"Transaction not found for refund: payment_id={payment_id}")
+
+
         # Handle other events if needed
         else:
             logger.info(f"Unhandled webhook event: {event}")

@@ -150,16 +150,24 @@ class ReviewSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 class BookingDetailSerializer(serializers.ModelSerializer):
-    review = ReviewSerializer(required=False)  # Optional review field
-
+    review = ReviewSerializer(required=False)
     service_type = ServiceTypeSerializer(read_only=True)
     partner = PartnerSerializer(read_only=True)
-    extensions = BookingExtensionSerializer(many=True, read_only=True)  # Add this line
+    extensions = BookingExtensionSerializer(many=True, read_only=True)
+
+    reassignment_pending = serializers.SerializerMethodField()
 
     class Meta:
         model = Booking
         fields = '__all__'
-        read_only_fields = ['user', 'status', 'work_started_at', 'work_ended_at', 'total_amount', 'payment_status', 'review']
+        read_only_fields = [
+            'user', 'status', 'work_started_at', 'work_ended_at',
+            'total_amount', 'payment_status', 'review'
+        ]
+
+    def get_reassignment_pending(self, obj):
+        return obj.status == 'pending' and obj.released_by is not None
+
 
 
 

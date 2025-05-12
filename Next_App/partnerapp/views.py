@@ -586,6 +586,19 @@ class AcceptBookingView(APIView):
                 # Save the changes
                 booking.save()
 
+                # ✅ Notify user that a new partner has been assigned
+                if booking.user:
+                    try:
+                        send_push_notification(
+                            user=booking.user,
+                            title="Partner Updated",
+                            body="A new partner has been assigned as the previous one cancelled your booking.",
+                            data={"type": "partner_updated", "booking_id": str(booking.id)}
+                        )
+                    except Exception as e:
+                        logger.warning(f"⚠️ FCM error for user {booking.user.id}: {str(e)}")
+
+
             # Send notification to the customer who created the booking
             # You can use the customer's FCM token to send a notification
             if booking.user:
@@ -634,6 +647,18 @@ class ReleaseBookingView(APIView):
             booking.released_at = timezone.now()
 
             booking.save()
+
+            # ✅ Notify the user
+            if booking.user:
+                try:
+                    send_push_notification(
+                        user=booking.user,
+                        title="Partner Unavailable",
+                        body="Your assigned partner has cancelled. We are assigning a new partner shortly.",
+                        data={"type": "partner_released", "booking_id": str(booking.id)}
+                    )
+                except Exception as e:
+                    logger.warning(f"⚠️ FCM error for user {booking.user.id}: {str(e)}")
 
             # Optionally notify admin or other partners
             # notify_admin_booking_released(booking)

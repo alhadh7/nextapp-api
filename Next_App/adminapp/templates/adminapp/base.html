@@ -103,7 +103,7 @@
                                     <ul class="max-h-60 overflow-y-auto">
                                         {% for booking in stuck_paid_bookings %}
                                             <li class="px-4 py-2 hover:bg-gray-100">
-                                                <a href="{% url 'adminapp:booking_detail' booking.id %}" class="text-sm text-blue-600 hover:underline">
+                                                <a href="{% url 'adminapp:stuck_paid_bookings'  %}" class="text-sm text-blue-600 hover:underline">
                                                     ID {{ booking.id }} - {{ booking.user.full_name }}
                                                 </a>
                                                 <p class="text-xs text-gray-500">{{ booking.scheduled_date }}</p>
