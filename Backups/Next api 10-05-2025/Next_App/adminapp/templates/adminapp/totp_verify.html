@@ -1,0 +1,30 @@
+<!-- adminapp/templates/adminapp/totp_verify.html -->
+{% extends 'adminapp/base.html' %}
+
+{% block title %}Verify 2FA - Health Connect Admin{% endblock %}
+
+{% block auth_content %}
+<div class="w-full max-w-md">
+    <div class="bg-white p-8 rounded shadow">
+        <h2 class="text-2xl font-bold mb-6 text-center">Two-Factor Authentication</h2>
+        <p class="mb-4 text-center text-gray-600">Please enter the 6-digit code from your authenticator app</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="mb-6">
+                <label for="id_totp_token" class="block text-gray-700 text-sm font-bold mb-2">Verification Code</label>
+                <input type="text" name="totp_token" id="id_totp_token" required 
+                       class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline text-center text-2xl letter-spacing-wide"
+                       placeholder="000000" maxlength="6" autocomplete="off">
+            </div>
+            
+            <div class="flex items-center justify-between">
+                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full">
+                    Verify
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

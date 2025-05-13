@@ -54,12 +54,30 @@ class PartnerHomeView(APIView):
                 "error": "Access denied. You must be a verified partner to view this page."
             }, status=status.HTTP_403_FORBIDDEN)
         
+
+        # Count active bookings
+        active_bookings_count = Booking.objects.filter(
+            partner=partner,
+            status__in=['pending', 'confirmed', 'in_progress']
+        ).count()
+
+        # Total bookings (all statuses)
+        total_bookings_count = Booking.objects.filter(partner=partner).count()
+
+        # Average rating
+        reviews = Review.objects.filter(booking__partner=partner)
+        average_rating = reviews.aggregate(models.Avg('rating'))['rating__avg'] or 0
+
+
         return Response({
             "message": "Welcome to Partner Home!",
             "partner_id": partner.id,
             "education": partner.education,
             "experience": partner.experience,
-            "is_verified": partner.is_verified
+            "is_verified": partner.is_verified,
+            "active_bookings": active_bookings_count,
+            "total_bookings": total_bookings_count,
+            "average_rating": round(average_rating, 1)
         }, status=status.HTTP_200_OK)
 
 

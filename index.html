@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>User Management App</title>
+  <script src="https://unpkg.com/vue@3"></script>
+  <script src="https://unpkg.com/vue-router@4"></script>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 2em; background: #f7f7f7; }
+    input, button { margin: 0.5em 0; padding: 0.5em; width: 100%; max-width: 400px; }
+    section { margin-bottom: 2em; background: #fff; padding: 1em; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .success { color: green; }
+    .error { color: red; }
+    .loading { font-weight: bold; }
+    nav a { margin-right: 1em; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <nav>
+      <router-link to="/">Register</router-link>
+      <router-link to="/verify">Verify OTP</router-link>
+      <router-link to="/login">Login</router-link>
+      <router-link to="/verify-login">Verify Login</router-link>
+      <router-link to="/home">Home</router-link>
+    </nav>
+    <hr />
+    <div>
+      <label>Base URL: <input v-model="baseUrl" placeholder="https://api.example.com" /></label>
+    </div>
+    <router-view :base-url="baseUrl" :token="token" @update-token="updateToken"></router-view>
+  </div>
+
+  <script>
+    const apiMixin = {
+      data() {
+        return {
+          loading: false,
+          message: '',
+          error: ''
+        };
+      },
+      methods: {
+        async postData(endpoint, data, auth = false) {
+          this.loading = true;
+          this.message = '';
+          this.error = '';
+          try {
+            const res = await fetch(this.baseUrl + endpoint, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(auth ? { 'Authorization': `Bearer ${this.token}` } : {})
+              },
+              body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if (!res.ok) throw result;
+            this.message = JSON.stringify(result);
+            return result;
+          } catch (err) {
+            this.error = err.message || JSON.stringify(err);
+          } finally {
+            this.loading = false;
+          }
+        },
+        async getData(endpoint) {
+          this.loading = true;
+          this.message = '';
+          this.error = '';
+          try {
+            const res = await fetch(this.baseUrl + endpoint, {
+              headers: {
+                'Authorization': `Bearer ${this.token}`
+              }
+            });
+            const result = await res.json();
+            if (!res.ok) throw result;
+            this.message = JSON.stringify(result);
+            return result;
+          } catch (err) {
+            this.error = err.message || JSON.stringify(err);
+          } finally {
+            this.loading = false;
+          }
+        }
+      }
+    };
+
+    const Register = {
+      mixins: [apiMixin],
+      props: ['baseUrl', 'token'],
+      data() {
+        return {
+          form: { phone_number: '', email: '', full_name: '' }
+        };
+      },
+      template: `
+        <section>
+          <h2>Register User</h2>
+          <input v-model="form.phone_number" placeholder="Phone Number" />
+          <input v-model="form.email" placeholder="Email" />
+          <input v-model="form.full_name" placeholder="Full Name" />
+          <button @click="register">Register</button>
+          <div v-if="loading" class="loading">Processing...</div>
+          <div v-if="message" class="success">{{ message }}</div>
+          <div v-if="error" class="error">{{ error }}</div>
+        </section>
+      `,
+      methods: {
+        register() {
+          this.postData('/auth/register/user/', this.form);
+        }
+      }
+    };
+
+    const Verify = {
+      mixins: [apiMixin],
+      props: ['baseUrl', 'token'],
+      data() {
+        return {
+          form: { phone_number: '', verification_id: '', otp: '' }
+        };
+      },
+      template: `
+        <section>
+          <h2>Verify User OTP</h2>
+          <input v-model="form.phone_number" placeholder="Phone Number" />
+          <input v-model="form.verification_id" placeholder="Verification ID" />
+          <input v-model="form.otp" placeholder="OTP" />
+          <button @click="verify">Verify</button>
+          <div v-if="loading" class="loading">Processing...</div>
+          <div v-if="message" class="success">{{ message }}</div>
+          <div v-if="error" class="error">{{ error }}</div>
+        </section>
+      `,
+      methods: {
+        verify() {
+          this.postData('/auth/verify/user/', this.form);
+        }
+      }
+    };
+
+    const Login = {
+      mixins: [apiMixin],
+      props: ['baseUrl', 'token'],
+      data() {
+        return {
+          phone_number: ''
+        };
+      },
+      template: `
+        <section>
+          <h2>Request Login OTP</h2>
+          <input v-model="phone_number" placeholder="Phone Number" />
+          <button @click="login">Request OTP</button>
+          <div v-if="loading" class="loading">Processing...</div>
+          <div v-if="message" class="success">{{ message }}</div>
+          <div v-if="error" class="error">{{ error }}</div>
+        </section>
+      `,
+      methods: {
+        login() {
+          this.postData('/auth/login/user/', { phone_number: this.phone_number });
+        }
+      }
+    };
+
+    const VerifyLogin = {
+      mixins: [apiMixin],
+      props: ['baseUrl'],
+      data() {
+        return {
+          form: { phone_number: '', verification_id: '', otp: '' }
+        };
+      },
+      template: `
+        <section>
+          <h2>Verify Login OTP</h2>
+          <input v-model="form.phone_number" placeholder="Phone Number" />
+          <input v-model="form.verification_id" placeholder="Verification ID" />
+          <input v-model="form.otp" placeholder="OTP" />
+          <button @click="verifyLogin">Verify & Store Token</button>
+          <div v-if="loading" class="loading">Processing...</div>
+          <div v-if="message" class="success">{{ message }}</div>
+          <div v-if="error" class="error">{{ error }}</div>
+        </section>
+      `,
+      methods: {
+        async verifyLogin() {
+          const res = await this.postData('/auth/verify/login/user/', this.form);
+          if (res && res.access_token) {
+            localStorage.setItem('access_token', res.access_token);
+            this.$emit('update-token', res.access_token);
+            this.message = 'Token stored successfully';
+          }
+        }
+      }
+    };
+
+    const Home = {
+      mixins: [apiMixin],
+      props: ['baseUrl', 'token'],
+      template: `
+        <section>
+          <h2>User Home</h2>
+          <button @click="loadHome">Load Home</button>
+          <div v-if="loading" class="loading">Loading...</div>
+          <div v-if="message" class="success">{{ message }}</div>
+          <div v-if="error" class="error">{{ error }}</div>
+        </section>
+      `,
+      methods: {
+        loadHome() {
+          this.getData('/user/home/');
+        }
+      }
+    };
+
+    const routes = [
+      { path: '/', component: Register },
+      { path: '/verify', component: Verify },
+      { path: '/login', component: Login },
+      { path: '/verify-login', component: VerifyLogin },
+      { path: '/home', component: Home }
+    ];
+
+    const router = VueRouter.createRouter({
+      history: VueRouter.createWebHashHistory(),
+      routes
+    });
+
+    const app = Vue.createApp({
+      data() {
+        return {
+          baseUrl: '',
+          token: localStorage.getItem('access_token') || ''
+        };
+      },
+      methods: {
+        updateToken(newToken) {
+          this.token = newToken;
+        }
+      }
+    });
+
+    app.use(router);
+    app.mount('#app');
+  </script>
+</body>
+</html>
