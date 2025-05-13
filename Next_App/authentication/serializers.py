@@ -156,17 +156,22 @@ class BookingDetailSerializer(serializers.ModelSerializer):
     extensions = BookingExtensionSerializer(many=True, read_only=True)
 
     reassignment_pending = serializers.SerializerMethodField()
+    accepted_requests_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Booking
         fields = '__all__'
         read_only_fields = [
             'user', 'status', 'work_started_at', 'work_ended_at',
-            'total_amount', 'payment_status', 'review','cancellation_reason'
+            'total_amount', 'payment_status', 'review', 'cancellation_reason'
         ]
 
     def get_reassignment_pending(self, obj):
         return obj.status == 'pending' and obj.released_by is not None
+
+    def get_accepted_requests_count(self, obj):
+        return obj.requests.filter(status='accepted').count()
+
 
 
 
