@@ -162,7 +162,7 @@ class BookingDetailSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = [
             'user', 'status', 'work_started_at', 'work_ended_at',
-            'total_amount', 'payment_status', 'review'
+            'total_amount', 'payment_status', 'review','cancellation_reason'
         ]
 
     def get_reassignment_pending(self, obj):
