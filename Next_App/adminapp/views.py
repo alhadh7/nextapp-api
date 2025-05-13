@@ -768,6 +768,8 @@ def refund_booking(request, booking_id):
             # Update booking status
             booking.status = 'cancelled'  # Set booking to 'cancelled'
             booking.payment_status = 'refunded'  # Mark payment as refunded
+            booking.cancellation_reason = "Cancelled by partner and refunded"
+
             booking.save()
 
             messages.success(request, f"Booking #{booking.id} refunded successfully.")

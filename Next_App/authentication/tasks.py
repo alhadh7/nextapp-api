@@ -11,39 +11,48 @@ def auto_cancel_bookings():
     extension_timeout = timedelta(minutes=10)
     release_timeout = timedelta(minutes=30)
 
-    # Cancel bookings that are still unassigned after 15 minutes
+    # Cancel unassigned bookings after timeout
     unassigned = Booking.objects.filter(
         status='pending',
         partner__isnull=True,
         created_at__lt=now - timeout
     )
-    unassigned_count = unassigned.update(status='cancelled')
+    for booking in unassigned:
+        booking.status = 'cancelled'
+        booking.cancellation_reason = 'Auto-cancelled: No partner assigned in time'
+        booking.save()
 
-    # Cancel bookings with an assigned partner but unpaid after 15 minutes
+    # Cancel assigned but unpaid bookings after timeout
     unpaid = Booking.objects.filter(
-        # status='pending',
         partner__isnull=False,
         payment_status='pending',
         partner_accepted_at__lt=now - timeout
     )
-    unpaid_count = unpaid.update(status='cancelled')
+    for booking in unpaid:
+        booking.status = 'cancelled'
+        booking.cancellation_reason = 'Auto-cancelled: Payment not completed in time'
+        booking.save()
 
-
-    # Cancel approved extensions not paid within 5 minute of approval
+    # Cancel approved extensions not paid
     unpaid_extensions = BookingExtension.objects.filter(
         status='approved',
         payment_status='pending',
         partner_accepted_at__lt=now - extension_timeout
     )
+    for extension in unpaid_extensions:
+        extension.status = 'rejected'
+        extension.cancellation_reason = 'Auto-rejected: Payment for extension not completed in time'
+        extension.save()
 
-    unpaid_extension_count = unpaid_extensions.update(status='rejected')
-
-    # Cancel pending extensions not responded to within 5 minute
+    # Cancel pending extensions not responded to
     stale_pending_extensions = BookingExtension.objects.filter(
         status='pending',
         requested_at__lt=now - extension_timeout
     )
-    stale_extension_count = stale_pending_extensions.update(status='rejected')
+    for extension in stale_pending_extensions:
+        extension.status = 'rejected'
+        extension.cancellation_reason = 'Auto-rejected: No response to extension request'
+        extension.save()
 
    # ✅ Notify admin if paid booking is pending for 30+ minutes and still unassigned
     stuck_paid_bookings = Booking.objects.filter(
@@ -67,10 +76,10 @@ def auto_cancel_bookings():
 
 
     print(
-        f"Auto-cancelled {unassigned_count} unassigned, "
-        f"{unpaid_count} unpaid bookings, "
-        f"{unpaid_extension_count} unpaid approved extensions, and "
-        f"{stale_extension_count} stale pending extensions."
+        f"Auto-cancelled {unassigned.count()} unassigned, "
+        f"{unpaid.count()} unpaid bookings, "
+        f"{unpaid_extensions.count()} unpaid approved extensions, and "
+        f"{stale_pending_extensions.count()} stale pending extensions."
         f"{stuck_paid_bookings.count()} stuck paid notified."
 
     )

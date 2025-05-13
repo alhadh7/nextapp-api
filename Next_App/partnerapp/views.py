@@ -582,6 +582,9 @@ class AcceptBookingView(APIView):
 
                 # Ensure the partner accepted the booking
                 booking.partner_accepted_at = timezone.now()
+
+                # ✅ Clear cancellation reason
+                booking.cancellation_reason = None
                 
                 # Save the changes
                 booking.save()
@@ -640,10 +643,14 @@ class ReleaseBookingView(APIView):
 
             BookingRequest.objects.filter(booking=booking, partner=partner).update(status='released')
 
+
+
+
             # Release the booking
             booking.partner = None
             booking.status = 'pending'  # Reset to pending so it's available again
             booking.released_by = request.user.partner # or the Partner instance
+            booking.cancellation_reason = "Partner cancelled, awaiting reassignment"
             booking.released_at = timezone.now()
 
             booking.save()

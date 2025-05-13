@@ -178,6 +178,8 @@ class Booking(models.Model):
     released_by = models.ForeignKey(Partner, on_delete=models.SET_NULL, null=True, blank=True, related_name='released_bookings')
     released_at = models.DateTimeField(null=True, blank=True)
 
+    cancellation_reason = models.TextField(null=True, blank=True)
+
     work_started_at = models.DateTimeField(null=True, blank=True)
     work_ended_at = models.DateTimeField(null=True, blank=True)
     
@@ -233,6 +235,7 @@ class BookingExtension(models.Model):
 
     partner_accepted_at = models.DateTimeField(null=True, blank=True)
 
+    cancellation_reason = models.TextField(null=True, blank=True)
 
     # Payment for extension
     extension_amount = models.DecimalField(max_digits=10, decimal_places=2)

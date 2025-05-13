@@ -921,6 +921,8 @@ class CancelBookingView(APIView):
                     # Update booking
                     booking.status = 'cancelled'
                     booking.payment_status = 'refunded'
+                    booking.cancellation_reason = "Cancelled and refunded"
+
                     booking.save()
 
                     # Notify partner
