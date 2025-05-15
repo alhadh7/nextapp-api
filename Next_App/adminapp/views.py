@@ -711,6 +711,14 @@ def service_list(request):
             messages.success(request, "Service updated.")
             return redirect('adminapp:service_list')
 
+        elif 'toggle_status' in request.POST:
+            service.is_active = not service.is_active
+            service.save()
+            status = "enabled" if service.is_active else "disabled"
+            messages.success(request, f"Service {status}.")
+            return redirect('adminapp:service_list')
+
+
     return render(request, 'adminapp/service_list.html', {'services': services})
 
 

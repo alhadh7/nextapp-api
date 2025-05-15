@@ -125,7 +125,10 @@ class ServiceType(models.Model):
     name = models.CharField(max_length=50, choices=SERVICE_CHOICES, unique=True)
     description = models.TextField()
     base_hourly_rate = models.DecimalField(max_digits=10, decimal_places=2)
-    
+    is_active = models.BooleanField(default=True)  # <-- New field
+
+
+
     def __str__(self):
         return self.get_name_display()
     
@@ -302,7 +305,7 @@ class Transaction(models.Model):
         return f"Transaction {self.id}: {self.transaction_type} - ₹{self.amount} - {self.status}"
     
 
-# models.py
+# models.py 
 class FCMToken(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='fcm_tokens')
     token = models.CharField(max_length=255)  # Removed unique=True
@@ -310,3 +313,4 @@ class FCMToken(models.Model):
     
     class Meta:
         unique_together = ('user', 'token')  # Only prevent duplicate user-token pairs
+

@@ -25,7 +25,13 @@
                 <td class="py-2 px-4 border-b">{{ forloop.counter }}</td>
                 <td class="py-2 px-4 border-b">{{ service.get_name_display }}</td>
                 <td class="py-2 px-4 border-b">{{ service.description }}</td>
-                <td class="py-2 px-4 border-b">{{ service.base_hourly_rate }}</td>
+                <td class="py-2 px-4 border-b">
+                    {{ service.base_hourly_rate }}
+                    {% if not service.is_active %}
+                        <span class="ml-2 text-sm text-red-500">(Disabled)</span>
+                    {% endif %}
+                </td>
+                
                 <td class="py-2 px-4 border-b space-x-2">
                     <!-- Edit Modal Trigger -->
                     <button 
@@ -38,6 +44,17 @@
                         <input type="hidden" name="service_id" value="{{ service.id }}">
                         <button type="submit" name="delete_service" class="text-red-500 hover:underline">Delete</button>
                     </form>
+
+                    <!-- Toggle Active/Inactive -->
+                    <form method="post" class="inline">
+                        {% csrf_token %}
+                        <input type="hidden" name="service_id" value="{{ service.id }}">
+                        <button type="submit" name="toggle_status" class="text-yellow-500 hover:underline">
+                            {{ "Disable" if service.is_active else "Enable" }}
+                        </button>
+                    </form>
+
+
                 </td>
             </tr>
 
