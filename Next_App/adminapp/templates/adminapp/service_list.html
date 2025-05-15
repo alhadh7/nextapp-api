@@ -31,7 +31,7 @@
                         <span class="ml-2 text-sm text-red-500">(Disabled)</span>
                     {% endif %}
                 </td>
-                
+
                 <td class="py-2 px-4 border-b space-x-2">
                     <!-- Edit Modal Trigger -->
                     <button 
@@ -50,7 +50,11 @@
                         {% csrf_token %}
                         <input type="hidden" name="service_id" value="{{ service.id }}">
                         <button type="submit" name="toggle_status" class="text-yellow-500 hover:underline">
-                            {{ "Disable" if service.is_active else "Enable" }}
+                        {% if service.is_active %}
+                            Disable
+                        {% else %}
+                            Enable
+                        {% endif %}
                         </button>
                     </form>
 
