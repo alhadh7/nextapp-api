@@ -693,17 +693,16 @@ def service_list(request):
 
     if request.method == 'POST':
         service_id = request.POST.get('service_id')
+        service = get_object_or_404(ServiceType, id=service_id)  # ✅ Moved here
 
         # Delete
         if 'delete_service' in request.POST:
-            service = get_object_or_404(ServiceType, id=service_id)
             service.delete()
             messages.success(request, "Service deleted.")
             return redirect('adminapp:service_list')
 
         # Update
         elif 'update_service' in request.POST:
-            service = get_object_or_404(ServiceType, id=service_id)
             service.name = request.POST.get('name')
             service.description = request.POST.get('description')
             service.base_hourly_rate = request.POST.get('base_hourly_rate')
@@ -711,13 +710,13 @@ def service_list(request):
             messages.success(request, "Service updated.")
             return redirect('adminapp:service_list')
 
+        # Toggle status
         elif 'toggle_status' in request.POST:
             service.is_active = not service.is_active
             service.save()
             status = "enabled" if service.is_active else "disabled"
             messages.success(request, f"Service {status}.")
             return redirect('adminapp:service_list')
-
 
     return render(request, 'adminapp/service_list.html', {'services': services})
 
