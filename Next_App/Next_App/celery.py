@@ -19,7 +19,7 @@ app.autodiscover_tasks()
 # Celery Beat schedule to run every 5 minutes
 app.conf.beat_schedule = {
     'auto-cancel-bookings-every-5-minutes': {
-        'task': 'authentication.tasks.auto_cancel_bookings',  # Path to your task
+        'task': 'authentication.utilities.tasks.auto_cancel_bookings',  # Path to your task
         'schedule': crontab(minute='*/5'),  # Every 5 minutes
     },
 }

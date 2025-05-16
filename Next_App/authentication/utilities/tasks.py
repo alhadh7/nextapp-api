@@ -1,7 +1,7 @@
 from celery import shared_task
 from django.utils import timezone
 from datetime import timedelta
-from .models import Booking, BookingExtension
+from authentication.models import Booking, BookingExtension
 
 @shared_task
 def auto_cancel_bookings():

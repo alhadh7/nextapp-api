@@ -2,7 +2,7 @@
 from django.urls import path
 from rest_framework.authtoken.views import obtain_auth_token
 
-from .utils import SaveFCMTokenView
+from authentication.utilities.utils import SaveFCMTokenView
 
 
 from .views import (

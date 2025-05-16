@@ -3,7 +3,7 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.views import APIView
 from rest_framework.response import Response
 # from pyfcm import FCMNotification
-from .models import FCMToken
+from authentication.models import FCMToken
 from rest_framework import status
 
 # class SaveFCMTokenView(APIView):
@@ -83,7 +83,7 @@ import firebase_admin
 from firebase_admin import credentials, messaging
 from firebase_admin.exceptions import FirebaseError
 
-from .models import FCMToken  # Adjust this import if needed
+from authentication.models import FCMToken  # Adjust this import if needed
 
 # Initialize Firebase Admin SDK
 cred_path = "lib/health-connect-app-8d8ea-firebase-adminsdk-fbsvc-5486840072.json"  # ✅ Update this

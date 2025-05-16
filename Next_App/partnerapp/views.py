@@ -20,7 +20,8 @@ from datetime import datetime
 import logging
 logger = logging.getLogger(__name__)
 
-from authentication.utils import send_push_notification
+from authentication import models
+from authentication.utilities.utils import send_push_notification
 from authentication.serializers import BankDetailsSerializer, BookingDetailSerializer, BookingExtensionSerializer, BookingRequestSerializer, ReviewSerializer, ServiceTypeSerializer, WalletDetailsSerializer
 from authentication.models import (
     CustomUser, FCMToken, Partner, PartnerWallet, ServiceType, Booking, 

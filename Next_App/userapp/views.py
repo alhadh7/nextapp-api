@@ -8,7 +8,7 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.utils import timezone
 
-from authentication.utils import send_push_notification
+from authentication.utilities.utils import send_push_notification
 from authentication.models import (
     CustomUser, Partner, PartnerWallet, ServiceType, Booking, 
     BookingRequest, BookingExtension, Review, Transaction
@@ -107,6 +107,27 @@ class CreateBookingView(APIView):
         # Get booking data
         booking_data = request.data
         is_instant = booking_data.get("is_instant", True)
+
+        # Validate service availability
+        service_id = booking_data.get("service_type")
+        if not service_id:
+            return Response({
+                "error": "Service type is required."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            service = ServiceType.objects.get(id=service_id)
+        except ServiceType.DoesNotExist:
+            return Response({
+                "error": "Selected service does not exist."
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+        if not service.is_active:
+            return Response({
+                "error": "This service is currently disabled and cannot be booked."
+            }, status=status.HTTP_403_FORBIDDEN)
+
+
 
         # Determine booking date
         if is_instant:

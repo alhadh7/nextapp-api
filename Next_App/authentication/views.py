@@ -14,6 +14,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 
+from authentication.utilities.validators import is_valid_email, is_valid_phone_number
+
 from .models import OTP, FCMToken, Partner, CustomUser
 
 import requests
@@ -133,6 +135,13 @@ class RegisterUserView(APIView):
         phone_number = request.data.get('phone_number')
         email = request.data.get('email')
         full_name = request.data.get('full_name')
+
+        if not is_valid_phone_number(phone_number):
+            return Response({'error': 'Invalid phone number format. Use international format, e.g., +1234567890.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not is_valid_email(email):
+            return Response({'error': 'Invalid email address.'}, status=status.HTTP_400_BAD_REQUEST)
+
 
         if CustomUser.objects.filter(email=email).exists():
             # If the email exists, return a response with an error message
