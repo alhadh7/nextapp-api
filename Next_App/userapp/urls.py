@@ -8,8 +8,6 @@ urlpatterns = [
     # Common endpoints
     path('home/', views.UserHomeView.as_view(), name='user-home'),
 
-    path('profile/', views.UserProfileView.as_view(), name='user-profile'),
-
 
     path('services/', views.ServiceTypeListView.as_view(), name='service-list'),
     path('bookings/history/', views.BookingHistoryView.as_view(), name='booking-history'),
@@ -41,8 +39,6 @@ urlpatterns = [
     path('bookings/<int:booking_id>/review/', views.CreateReviewView.as_view(), name='create-review'),
     
     path('razorpay/webhook/', views.RazorPayWebhookView.as_view(), name='razorpay-webhook'),
-
-
 
     path('booking/<int:booking_id>/cancel/', views.CancelBookingView.as_view, name='cancel_booking'),
 

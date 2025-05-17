@@ -5,8 +5,8 @@ from authentication.models import CustomUser, Partner, ServiceType, Booking, Boo
 class CustomUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
-        fields = ['id', 'email',  'user_address', 'full_name', 'is_partner']
-        read_only_fields = ['id', 'is_partner']
+        fields = ['id', 'email', 'is_partner' , 'user_address', 'full_name', 'is_partner']
+        read_only_fields = ['id']
 
 class PartnerSerializer(serializers.ModelSerializer):
     class Meta:
