@@ -8,6 +8,7 @@ urlpatterns = [
     # Common endpoints
     path('home/', views.UserHomeView.as_view(), name='user-home'),
 
+    path('profile/', views.UserProfileView.as_view(), name='user-profile'),
 
     path('services/', views.ServiceTypeListView.as_view(), name='service-list'),
     path('bookings/history/', views.BookingHistoryView.as_view(), name='booking-history'),

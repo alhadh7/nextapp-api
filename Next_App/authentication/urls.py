@@ -42,7 +42,7 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
 
 
-    path('users/update/', UpdateUserView.as_view(), name='update-user'),
+    # path('users/update/', UpdateUserView.as_view(), name='update-user'),
     path('partners/update/', UpdatePartnerView.as_view(), name='update-partner'),
 
 
