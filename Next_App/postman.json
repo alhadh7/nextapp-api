@@ -66,41 +66,45 @@
                         "url": {"raw": "{{base_url}}/user/home/", "host": ["{{base_url}}"], "path": ["user","home"]}
                     }
                 },
+
                 {
-                    "name": "Update User Details",
+                    "name": "User Profile",
                     "request": {
-                      "method": "PUT",
-                      "header": [
-                        {
-                          "key": "Authorization",
-                          "value": "Bearer {{jwt_token}}",
-                          "type": "text"
-                        },
-                        {
-                          "key": "Content-Type",
-                          "value": "application/json",
-                          "type": "text"
-                        }
-                      ],
-                      "body": {
-                        "mode": "raw",
-                        "raw": "{\n    \"email\": \"updated.email@example.com\",\n    \"full_name\": \"Updated User Name\",\n    \"user_address\": \"456 New Street, Mumbai, Maharashtra, 400001\"\n}"
-                      },
-                      "url": {
-                        "raw": "{{base_url}}/user/update/",
-                        "host": [
-                          "{{base_url}}"
+                        "method": "GET",
+                        "header": [
+                            { "key": "Authorization", "value": "Bearer {{access_token}}" },
+                            { "key": "Content-Type", "value": "application/json" }
                         ],
-                        "path": [
-                  
-                          "user",
-                          "update"
-                        ]
-                      },
-                      "description": "Updates basic user details except phone number"
-                    },
-                    "response": []
-                  },
+                        "url": {
+                            "raw": "{{base_url}}/user/profile/",
+                            "host": ["{{base_url}}"],
+                            "path": ["user", "profile"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Profile",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            { "key": "Authorization", "value": "Bearer {{access_token}}" },
+                            { "key": "Content-Type", "value": "application/json" }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"full_name\": \"New Name\",\n  \"user_address\": \"123 Street, City\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/user/profile/",
+                            "host": ["{{base_url}}"],
+                            "path": ["user", "profile"]
+                        }
+                    }
+                },
+                
+
+
+               
                   {
                     "name": "Save FCM Token",
                     "request": {

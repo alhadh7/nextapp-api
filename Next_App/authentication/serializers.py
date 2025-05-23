@@ -18,6 +18,10 @@ class PartnerSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['id', 'is_verified', 'phone_number']
 
+    def get_average_rating(self, obj):
+        from django.db.models import Avg
+        return obj.assignments.filter(review__isnull=False).aggregate(avg_rating=Avg('review__rating'))['avg_rating']
+
 class ServiceTypeSerializer(serializers.ModelSerializer):
     # Adding a custom field to remove underscores from the 'name' field for the serialized output
     name_no_underscore = serializers.SerializerMethodField()
