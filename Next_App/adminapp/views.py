@@ -760,9 +760,16 @@ def refund_booking(request, booking_id):
 
     try:
         with db_transaction.atomic():
+
+            txn_amount = txn.amount  # The original amount (in dollars or your currency unit)
+
+            # Reducing it by 2.4%
+            reduced_amount = txn_amount * (1 - 2.4 / 100)
+
+
             # Request a refund via Razorpay API
             refund = razorpay_client.payment.refund(txn.razorpay_payment_id, {
-                "amount": int(txn.amount * 100),  # Amount in paise
+                "amount": int(reduced_amount * 100),  # Amount in paise
                 "speed": "optimum"  # Optional: 'optimum' or 'quick'
             })
 

@@ -951,8 +951,15 @@ class CancelBookingView(APIView):
             try:
                 with db_transaction.atomic():
                     # Refund
+
+                    txn_amount = txn.amount  # The original amount (in dollars or your currency unit)
+
+                    # Reducing it by 2.4%
+                    reduced_amount = txn_amount * (1 - 2.4 / 100)
+
+
                     refund = razorpay_client.payment.refund(txn.razorpay_payment_id, {
-                        "amount": int(txn.amount * 100),
+                        "amount": int(reduced_amount * 100),
                         "speed": "optimum"
                     })
 
