@@ -963,6 +963,7 @@ class CancelBookingView(APIView):
                     # Round down to 2 decimal places (using ROUND_DOWN)
                     reduced_amount = reduced_amount.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
 
+                    print("reduced",reduced_amount)
 
                     refund = razorpay_client.payment.refund(txn.razorpay_payment_id, {
                         "amount": int(reduced_amount * 100),
