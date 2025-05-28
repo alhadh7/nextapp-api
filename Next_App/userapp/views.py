@@ -967,7 +967,7 @@ class CancelBookingView(APIView):
 
                     refund = razorpay_client.payment.refund(txn.razorpay_payment_id, {
                         "amount": int(reduced_amount * 100),
-                        "speed": "optimum"
+                        "speed": "normal"
                     })
 
                     # Update transaction

@@ -778,7 +778,7 @@ def refund_booking(request, booking_id):
             # Request a refund via Razorpay API
             refund = razorpay_client.payment.refund(txn.razorpay_payment_id, {
                 "amount": int(reduced_amount * 100),  # Amount in paise
-                "speed": "optimum"  # Optional: 'optimum' or 'quick'
+                "speed": "normal"  # Optional: 'optimum' or 'quick'
             })
 
             # Update transaction with refund details
