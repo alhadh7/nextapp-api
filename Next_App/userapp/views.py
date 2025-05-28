@@ -546,7 +546,7 @@ class CreateBookingOrderView(APIView):
 #                 "booking_id": booking.id
 #             }, status=status.HTTP_400_BAD_REQUEST)
 
-from decimal import Decimal
+from decimal import ROUND_DOWN, Decimal
 import razorpay
 from django.conf import settings
 from rest_framework.views import APIView
@@ -952,10 +952,16 @@ class CancelBookingView(APIView):
                 with db_transaction.atomic():
                     # Refund
 
-                    txn_amount = txn.amount  # The original amount (in dollars or your currency unit)
+                    txn_amount = txn.amount  # Assume txn.amount is a Decimal or float
+
+                    # Convert txn_amount to Decimal if it's not already
+                    txn_amount_decimal = Decimal(str(txn_amount))
 
                     # Reducing it by 2.4%
-                    reduced_amount = txn_amount * (1 - 2.4 / 100)
+                    reduced_amount = txn_amount_decimal * (Decimal(1) - Decimal(2.4) / Decimal(100))
+
+                    # Round down to 2 decimal places (using ROUND_DOWN)
+                    reduced_amount = reduced_amount.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
 
 
                     refund = razorpay_client.payment.refund(txn.razorpay_payment_id, {

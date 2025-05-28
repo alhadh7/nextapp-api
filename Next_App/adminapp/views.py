@@ -1,5 +1,6 @@
 # adminapp/views/auth_views.py
 import binascii
+from decimal import ROUND_DOWN, Decimal
 from django.conf import settings
 import pyotp
 import qrcode
@@ -761,10 +762,16 @@ def refund_booking(request, booking_id):
     try:
         with db_transaction.atomic():
 
-            txn_amount = txn.amount  # The original amount (in dollars or your currency unit)
+            txn_amount = txn.amount  # Assume txn.amount is a Decimal or float
+
+            # Convert txn_amount to Decimal if it's not already
+            txn_amount_decimal = Decimal(str(txn_amount))
 
             # Reducing it by 2.4%
-            reduced_amount = txn_amount * (1 - 2.4 / 100)
+            reduced_amount = txn_amount_decimal * (Decimal(1) - Decimal(2.4) / Decimal(100))
+
+            # Round down to 2 decimal places (using ROUND_DOWN)
+            reduced_amount = reduced_amount.quantize(Decimal('0.01'), rounding=ROUND_DOWN)
 
 
             # Request a refund via Razorpay API
