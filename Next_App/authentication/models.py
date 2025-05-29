@@ -98,8 +98,62 @@ class Partner(CustomUser):
     bank_account_number = models.CharField(max_length=50, null=True, blank=True)
     ifsc_code = models.CharField(max_length=20, null=True, blank=True)
 
+    razorpay_contact_id = models.CharField(max_length=100, null=True, blank=True)
+    razorpay_fund_account_id = models.CharField(max_length=100, null=True, blank=True)
+
     # Location Details 
     address = models.CharField(max_length=255, null=True, blank=True)
+
+
+    def save(self, *args, **kwargs):
+        reset_fund_account = False
+        update_contact = False
+
+        if self.pk:  # Existing object
+            old = Partner.objects.get(pk=self.pk)
+            if (self.bank_account_number != old.bank_account_number or
+                self.ifsc_code != old.ifsc_code):
+                reset_fund_account = True
+
+            if (self.full_name != old.full_name or self.email != old.email):
+                update_contact = True
+        else:
+            # New object
+            reset_fund_account = bool(self.bank_account_number and self.ifsc_code)
+            update_contact = True
+
+        if reset_fund_account:
+            self.razorpay_fund_account_id = None
+
+        super().save(*args, **kwargs)
+
+        if self.razorpay_contact_id and update_contact:
+            self.update_razorpay_contact()
+
+    def update_razorpay_contact(self):
+        import requests
+        from django.conf import settings
+
+        auth = (settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
+        contact_id = self.razorpay_contact_id
+        url = f"https://api.razorpay.com/v1/contacts/{contact_id}"
+
+        payload = {
+            "name": self.full_name,
+            "email": self.email,
+            "contact": self.phone_number,
+            "type": "vendor",
+            "reference_id": f"partner_{self.id}",
+            "notes": {"source": "contact_update_on_save"},
+        }
+
+        resp = requests.patch(url, auth=auth, json=payload)
+        if resp.status_code not in (200, 201):
+            print(f"Failed to update Razorpay contact: {resp.text}")
+
+    def __str__(self):
+        return f"Partner: {self.id} {self.full_name} ({self.phone_number})"
+
 
     def __str__(self):
         return f"Partner: {self.id} {self.full_name} ({self.phone_number})"

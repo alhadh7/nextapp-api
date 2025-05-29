@@ -568,28 +568,128 @@ def partner_list(request):
 
     return render(request, 'adminapp/partner_list.html', {'page_obj': page_obj})
 
+# @admin_required
+# def trigger_partner_payout(request, partner_id):
+#     partner = get_object_or_404(Partner, id=partner_id)
+#     print(partner)
+#     try:
+#         wallet = partner.wallet
+#     except PartnerWallet.DoesNotExist:
+#         messages.error(request, "Wallet not found for this partner.")
+#         return redirect('adminapp:partner_list')
+
+#     if wallet.balance >= 0:
+#         # Simulate payout
+#         wallet.last_payout_date = now()
+#         partner.last_payment_date = now()
+#         wallet.balance = 0
+#         wallet.save()
+#         partner.save()
+#         messages.success(request, f"Payout triggered for {partner.full_name}.")
+#     else:
+#         messages.warning(request, f"No balance available for {partner.full_name}.")
+
+#     return redirect('adminapp:partner_list')
+
+import requests
+from django.utils.timezone import now
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect
+from django.conf import settings
+from authentication.models import Partner, PartnerWallet
+
 @admin_required
 def trigger_partner_payout(request, partner_id):
     partner = get_object_or_404(Partner, id=partner_id)
-    print(partner)
+
     try:
         wallet = partner.wallet
     except PartnerWallet.DoesNotExist:
         messages.error(request, "Wallet not found for this partner.")
         return redirect('adminapp:partner_list')
 
-    if wallet.balance >= 0:
-        # Simulate payout
-        wallet.last_payout_date = now()
-        partner.last_payment_date = now()
-        wallet.balance = 0
-        wallet.save()
-        partner.save()
-        messages.success(request, f"Payout triggered for {partner.full_name}.")
-    else:
+    if wallet.balance <= 0:
         messages.warning(request, f"No balance available for {partner.full_name}.")
+        return redirect('adminapp:partner_list')
+
+    auth = (settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
+
+    try:
+        # 1. Create Razorpay Contact if missing
+        if not partner.razorpay_contact_id:
+            contact_payload = {
+                "name": partner.full_name,
+                "email": partner.email,
+                "contact": partner.phone_number,
+                "type": "vendor",
+                "reference_id": f"partner_{partner.id}",
+                "notes": {"source": "payout_trigger"},
+            }
+            resp = requests.post("https://api.razorpay.com/v1/contacts", auth=auth, json=contact_payload)
+            if resp.status_code in (200, 201):
+                partner.razorpay_contact_id = resp.json()["id"]
+                partner.save()
+            else:
+                messages.error(request, f"Failed to create Razorpay contact: {resp.text}")
+                return redirect('adminapp:partner_list')
+
+        # 2. Create Razorpay Fund Account if missing (relies on model save to clear it if bank changed)
+        if not partner.razorpay_fund_account_id:
+            fund_account_payload = {
+                "contact_id": partner.razorpay_contact_id,
+                "account_type": "bank_account",
+                "bank_account": {
+                    "name": partner.bank_username or partner.full_name,
+                    "ifsc": partner.ifsc_code,
+                    "account_number": partner.bank_account_number,
+                }
+            }
+            resp = requests.post("https://api.razorpay.com/v1/fund_accounts", auth=auth, json=fund_account_payload)
+            if resp.status_code in (200, 201):
+                partner.razorpay_fund_account_id = resp.json()["id"]
+                partner.save()
+            else:
+                messages.error(request, f"Failed to create Razorpay fund account: {resp.text}")
+                return redirect('adminapp:partner_list')
+
+        # 3. Trigger Payout
+        payout_payload = {
+            "account_number": settings.RAZORPAY_ACCOUNT_NUMBER,
+            "fund_account_id": partner.razorpay_fund_account_id,
+            "amount": int(wallet.balance * 100),  # Convert to paise
+            "currency": "INR",
+            "mode": "IMPS",
+            "purpose": "payout",
+            "queue_if_low_balance": True,
+            "reference_id": f"payout_partner_{partner.id}_{now().strftime('%Y%m%d%H%M%S')}",
+            "narration": f"Payout to partner {partner.full_name}",
+            "notes": {
+                "partner_id": str(partner.id),
+                "triggered_by": "admin"
+            },
+        }
+
+        resp = requests.post("https://api.razorpay.com/v1/payouts", auth=auth, json=payout_payload)
+        if resp.status_code in (200, 201):
+            # Success - update records
+            wallet.last_payout_date = now()
+            wallet.balance = 0
+            wallet.save()
+
+            partner.last_payment_date = now()
+            partner.save()
+
+            messages.success(request, f"Payout triggered for {partner.full_name}.")
+        else:
+            messages.error(request, f"Payout failed: {resp.text}")
+
+    except requests.RequestException as e:
+        messages.error(request, f"Network error during Razorpay API call: {e}")
 
     return redirect('adminapp:partner_list')
+
+
+
 
 @admin_required
 def booking_list(request):
