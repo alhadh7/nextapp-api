@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     'adminapp',
     'django_otp',
     'django_otp.plugins.otp_totp',
-
+    'silk'
 ]
 
 # Login/logout URLs
@@ -70,7 +70,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-
+    'silk.middleware.SilkyMiddleware',
     'django_otp.middleware.OTPMiddleware',
 
     "django.contrib.messages.middleware.MessageMiddleware",

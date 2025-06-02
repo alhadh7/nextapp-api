@@ -151,8 +151,7 @@ class Partner(CustomUser):
         if resp.status_code not in (200, 201):
             print(f"Failed to update Razorpay contact: {resp.text}")
 
-    def __str__(self):
-        return f"Partner: {self.id} {self.full_name} ({self.phone_number})"
+
 
 
     def __str__(self):
