@@ -124,7 +124,8 @@ class BookingHistoryView(generics.ListAPIView):
         ).prefetch_related(
             'requests', 'extensions', 'review'
         ).annotate(
-            accepted_requests_count=Count('requests', filter=Q(requests__status='accepted')),
+            # accepted_requests_count=Count('requests', filter=Q(requests__status='accepted')),
+            accepted_requests_count=Count('requests', filter=Q(requests__status='accepted'), distinct=True),
             avg_rating=Avg('partner__assignments__review__rating', filter=Q(partner__assignments__review__isnull=False))
         ).order_by('-created_at')
 
