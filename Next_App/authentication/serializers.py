@@ -14,13 +14,17 @@ class PartnerSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'phone_number', 'email', 'full_name', 'education', 'experience', 'is_verified',
             'secondary_phone_number', 'languages_known', 'dob', 'bank_username', 
-            'bank_account_number', 'ifsc_code', 'address'
+            'bank_account_number', 'ifsc_code', 'address', 'average_rating'
         ]
         read_only_fields = ['id', 'is_verified', 'phone_number']
 
+    # def get_average_rating(self, obj):
+    #     from django.db.models import Avg
+    #     return obj.assignments.filter(review__isnull=False).aggregate(avg_rating=Avg('review__rating'))['avg_rating']
+
     def get_average_rating(self, obj):
-        from django.db.models import Avg
-        return obj.assignments.filter(review__isnull=False).aggregate(avg_rating=Avg('review__rating'))['avg_rating']
+            # Use pre-annotated value if available, else compute
+            return getattr(obj, 'avg_rating', None)
 
 class ServiceTypeSerializer(serializers.ModelSerializer):
     # Adding a custom field to remove underscores from the 'name' field for the serialized output
@@ -153,14 +157,38 @@ class ReviewSerializer(serializers.ModelSerializer):
         # Create and return the review
         return super().create(validated_data)
 
+# class BookingDetailSerializer(serializers.ModelSerializer):
+#     review = ReviewSerializer(required=False)
+#     service_type = ServiceTypeSerializer(read_only=True)
+#     partner = PartnerSerializer(read_only=True)
+#     extensions = BookingExtensionSerializer(many=True, read_only=True)
+
+#     reassignment_pending = serializers.SerializerMethodField()
+#     accepted_requests_count = serializers.SerializerMethodField()
+
+#     class Meta:
+#         model = Booking
+#         fields = '__all__'
+#         read_only_fields = [
+#             'user', 'status', 'work_started_at', 'work_ended_at',
+#             'total_amount', 'payment_status', 'review', 'cancellation_reason'
+#         ]
+
+#     def get_reassignment_pending(self, obj):
+#         return obj.status == 'pending' and obj.released_by is not None
+
+#     def get_accepted_requests_count(self, obj):
+#         return obj.requests.filter(status='accepted').count()
+
+from django.db.models import Count
+
 class BookingDetailSerializer(serializers.ModelSerializer):
-    review = ReviewSerializer(required=False)
+    review = ReviewSerializer(required=False, read_only=True)
     service_type = ServiceTypeSerializer(read_only=True)
     partner = PartnerSerializer(read_only=True)
     extensions = BookingExtensionSerializer(many=True, read_only=True)
-
     reassignment_pending = serializers.SerializerMethodField()
-    accepted_requests_count = serializers.SerializerMethodField()
+    accepted_requests_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Booking
@@ -172,11 +200,6 @@ class BookingDetailSerializer(serializers.ModelSerializer):
 
     def get_reassignment_pending(self, obj):
         return obj.status == 'pending' and obj.released_by is not None
-
-    def get_accepted_requests_count(self, obj):
-        return obj.requests.filter(status='accepted').count()
-
-
 
 
 

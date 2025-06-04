@@ -63,44 +63,75 @@ class ServiceTypeListView(generics.ListAPIView):
     queryset = ServiceType.objects.all()
     serializer_class = ServiceTypeSerializer
 
+# class BookingHistoryView(generics.ListAPIView):
+#     serializer_class = BookingDetailSerializer
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated]
+
+#     def get_queryset(self):
+
+#         user = self.request.user
+#         print(user.__dict__)
+
+#         is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        
+#         if is_partner:
+#             print('is partner')
+#             # Partner's booking history
+            
+#             #old one not optimised
+#             # return Booking.objects.filter(partner=user, status__in=['completed', 'cancelled']).order_by('-created_at')
+#             return Booking.objects.filter(
+#                 partner=user, status__in=['completed', 'cancelled']
+#             ).select_related(
+#                 'user', 'service_type', 'partner'
+#             ).prefetch_related(
+#                 'requests'
+#             ).order_by('-created_at')
+#         else:
+#             print('is user')
+#             # User's booking history
+            
+#             # return Booking.objects.filter(user=user, status__in=['completed', 'cancelled']).order_by('-created_at')
+#             return Booking.objects.filter(
+#                 user=user, status__in=['completed', 'cancelled']
+#             ).select_related(
+#                 'user', 'service_type', 'partner'
+#             ).prefetch_related(
+#                 'requests'
+#             ).order_by('-created_at')
+
+from django.db.models import Count, Q
+
+
+from django.db.models import Avg, Count, Q
+
 class BookingHistoryView(generics.ListAPIView):
     serializer_class = BookingDetailSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-
         user = self.request.user
-        print(user.__dict__)
-
         is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
         
-        if is_partner:
-            print('is partner')
-            # Partner's booking history
-            
-            #old one not optimised
-            # return Booking.objects.filter(partner=user, status__in=['completed', 'cancelled']).order_by('-created_at')
-            return Booking.objects.filter(
-                partner=user, status__in=['completed', 'cancelled']
-            ).select_related(
-                'user', 'service_type', 'partner'
-            ).prefetch_related(
-                'requests'
-            ).order_by('-created_at')
-        else:
-            print('is user')
-            # User's booking history
-            
-            # return Booking.objects.filter(user=user, status__in=['completed', 'cancelled']).order_by('-created_at')
-            return Booking.objects.filter(
-                user=user, status__in=['completed', 'cancelled']
-            ).select_related(
-                'user', 'service_type', 'partner'
-            ).prefetch_related(
-                'requests'
-            ).order_by('-created_at')
+        queryset = Booking.objects.filter(
+            partner=user if is_partner else user,
+            status__in=['completed', 'cancelled']
+        ).select_related(
+            'user', 'service_type', 'partner', 'partner__user_ptr', 'released_by', 'released_by__user_ptr'
+        ).prefetch_related(
+            'requests', 'extensions', 'review'
+        ).annotate(
+            accepted_requests_count=Count('requests', filter=Q(requests__status='accepted'))
+        ).order_by('-created_at')
 
+        # Annotate avg_rating for partners
+        queryset = queryset.annotate(
+            avg_rating=Avg('partner__assignments__review__rating', filter=Q(partner__assignments__review__isnull=False))
+        )
+
+        return queryset
 
 class BookingDetailView(APIView):
     authentication_classes = [JWTAuthentication]

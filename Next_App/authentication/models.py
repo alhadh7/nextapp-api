@@ -297,7 +297,7 @@ class BookingExtension(models.Model):
         ('rejected', 'Rejected'),
     )
     
-    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='extensions')
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='extensions', db_index=True) #new dn index
     additional_hours = models.PositiveIntegerField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     requested_at = models.DateTimeField(auto_now_add=True)
