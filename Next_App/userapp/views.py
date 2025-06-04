@@ -78,12 +78,28 @@ class BookingHistoryView(generics.ListAPIView):
         if is_partner:
             print('is partner')
             # Partner's booking history
-            return Booking.objects.filter(partner=user, status__in=['completed', 'cancelled']).order_by('-created_at')
+            
+            #old one not optimised
+            # return Booking.objects.filter(partner=user, status__in=['completed', 'cancelled']).order_by('-created_at')
+            return Booking.objects.filter(
+                partner=user, status__in=['completed', 'cancelled']
+            ).select_related(
+                'user', 'service_type', 'partner'
+            ).prefetch_related(
+                'requests'
+            ).order_by('-created_at')
         else:
             print('is user')
             # User's booking history
-            return Booking.objects.filter(user=user, status__in=['completed', 'cancelled']).order_by('-created_at')
-
+            
+            # return Booking.objects.filter(user=user, status__in=['completed', 'cancelled']).order_by('-created_at')
+            return Booking.objects.filter(
+                user=user, status__in=['completed', 'cancelled']
+            ).select_related(
+                'user', 'service_type', 'partner'
+            ).prefetch_related(
+                'requests'
+            ).order_by('-created_at')
 
 
 class BookingDetailView(APIView):
@@ -98,18 +114,31 @@ class BookingDetailView(APIView):
         if is_partner:
 
             # Partner can only view bookings assigned to them
+            # booking = get_object_or_404(
+            #     Booking, 
+            #     id=booking_id,
+            #     partner_id=request.user.id
+            # )
+
             booking = get_object_or_404(
-                Booking, 
+                Booking.objects.select_related('user', 'service_type', 'partner'),
                 id=booking_id,
                 partner_id=request.user.id
             )
+            
         else:
             # Regular user can only view their own bookings
+            # booking = get_object_or_404(
+            #     Booking, 
+            #     id=booking_id,
+            #     user=request.user
+            # )
+
             booking = get_object_or_404(
-                Booking, 
+                Booking.objects.select_related('user', 'service_type', 'partner'),
                 id=booking_id,
                 user=request.user
-            )
+            )        
         
         serializer = BookingDetailSerializer(booking)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -311,58 +340,83 @@ from django.db.models import IntegerField
 from django.db.models.functions import Cast
 
 
+# class BookingAvailablePartnersView(APIView):
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated]
+    
+#     def get(self, request, booking_id):
+#         booking = get_object_or_404(Booking, id=booking_id, user=request.user)
+
+#         # Auto-cancel if expired and unassigned
+#         # legacy now uses celery for cancellations
+#         # if (
+#         #     booking.status == 'pending' and
+#         #     booking.partner is None and
+#         #     timezone.now() - booking.created_at > timedelta(minutes=30)
+#         # ):
+#         #     booking.status = 'cancelled'
+#         #     booking.save()
+#         #     print("Booking auto-cancelled due to timeout.")
+#         #     return Response({
+#         #         "error": "Booking auto-cancelled due to no available partners after 30 minutes."
+#         #     }, status=status.HTTP_400_BAD_REQUEST)
+
+#         # print(f"Booking ID: {booking.id}, Partner Type: {booking.partner_type}")
+
+#         # Step 1: Partners who accepted the booking
+#         accepted_partners = Partner.objects.filter(
+#             booking_requests__booking=booking,
+#             booking_requests__status='accepted'
+#         )
+#         # print(f"Accepted partners count: {accepted_partners.count()}")
+
+#         # Step 2: Only verified partners
+#         verified_partners = accepted_partners.filter(is_verified=True)
+#         # print(f"Verified accepted partners count: {verified_partners.count()}")
+
+#         # Step 3: Cast experience to Integer for proper filtering
+#         verified_partners = verified_partners.annotate(
+#             experience_int=Cast('experience', IntegerField())
+#         )
+
+#         # Step 4: Filter by experience based on partner_type
+#         if booking.partner_type == 'trained':
+#             final_partners = verified_partners.filter(experience_int__gte=2)
+#             # print("Filtering for trained partners with experience >= 2")
+#         else:
+#             final_partners = verified_partners.filter(experience_int__lt=2)
+#             # print("Filtering for untrained partners with experience < 2")
+
+#         # print(f"Final partners count after filtering: {final_partners.count()}")
+
+#         serializer = PartnerSerializer(final_partners, many=True)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
 class BookingAvailablePartnersView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     
     def get(self, request, booking_id):
-        booking = get_object_or_404(Booking, id=booking_id, user=request.user)
-
-        # Auto-cancel if expired and unassigned
-        # legacy now uses celery for cancellations
-        # if (
-        #     booking.status == 'pending' and
-        #     booking.partner is None and
-        #     timezone.now() - booking.created_at > timedelta(minutes=30)
-        # ):
-        #     booking.status = 'cancelled'
-        #     booking.save()
-        #     print("Booking auto-cancelled due to timeout.")
-        #     return Response({
-        #         "error": "Booking auto-cancelled due to no available partners after 30 minutes."
-        #     }, status=status.HTTP_400_BAD_REQUEST)
-
-        # print(f"Booking ID: {booking.id}, Partner Type: {booking.partner_type}")
-
-        # Step 1: Partners who accepted the booking
-        accepted_partners = Partner.objects.filter(
+        booking = get_object_or_404(
+            Booking.objects.select_related('user'),
+            id=booking_id,
+            user=request.user
+        )
+        partners = Partner.objects.filter(
             booking_requests__booking=booking,
-            booking_requests__status='accepted'
-        )
-        # print(f"Accepted partners count: {accepted_partners.count()}")
-
-        # Step 2: Only verified partners
-        verified_partners = accepted_partners.filter(is_verified=True)
-        # print(f"Verified accepted partners count: {verified_partners.count()}")
-
-        # Step 3: Cast experience to Integer for proper filtering
-        verified_partners = verified_partners.annotate(
+            booking_requests__status='accepted',
+            is_verified=True
+        ).annotate(
             experience_int=Cast('experience', IntegerField())
-        )
-
-        # Step 4: Filter by experience based on partner_type
+        ).select_related('user_ptr')  # Assuming Partner inherits from CustomUser
+        
         if booking.partner_type == 'trained':
-            final_partners = verified_partners.filter(experience_int__gte=2)
-            # print("Filtering for trained partners with experience >= 2")
+            partners = partners.filter(experience_int__gte=2)
         else:
-            final_partners = verified_partners.filter(experience_int__lt=2)
-            # print("Filtering for untrained partners with experience < 2")
-
-        # print(f"Final partners count after filtering: {final_partners.count()}")
-
-        serializer = PartnerSerializer(final_partners, many=True)
+            partners = partners.filter(experience_int__lt=2)
+        
+        serializer = PartnerSerializer(partners, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
-
 
 class SelectPartnerView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -665,11 +719,18 @@ class UserActiveBookingsView(APIView):
             }, status=status.HTTP_403_FORBIDDEN)
             
         # Active bookings are those that are pending, confirmed, in progress, or scheduled for future
+        # active_bookings = Booking.objects.filter(
+        #     user=request.user
+        # ).filter(
+        #     Q(status='pending') | Q(status='confirmed') | Q(status='in_progress')
+        # )
+
         active_bookings = Booking.objects.filter(
             user=request.user
         ).filter(
             Q(status='pending') | Q(status='confirmed') | Q(status='in_progress')
-        )
+        ).select_related('user', 'service_type', 'partner')
+        
         
         serializer = BookingDetailSerializer(active_bookings, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)

@@ -74,8 +74,11 @@ class CustomUser(AbstractBaseUser):
 
 # Partner Model
 class Partner(CustomUser):
-    is_verified = models.BooleanField(default=False)  
-    experience = models.CharField(max_length=255, null=True, blank=True)
+    # is_verified = models.BooleanField(default=False)  
+    # experience = models.CharField(max_length=255, null=True, blank=True)
+    is_verified = models.BooleanField(default=False, db_index=True)
+    experience = models.IntegerField(null=True, blank=True, db_index=True)  # Changed from CharField
+    
     total_earnings = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
 
     # Personal Information
@@ -254,6 +257,12 @@ class Booking(models.Model):
         self.total_amount = base_rate * rate_multiplier * Decimal(self.hours)
         return self.total_amount
 
+    class Meta:
+            indexes = [
+                models.Index(fields=['user', 'status'], name='booking_user_status_idx'),
+            ]
+
+
 # Booking requests from users to partners
 class BookingRequest(models.Model):
     STATUS_CHOICES = (
@@ -271,6 +280,10 @@ class BookingRequest(models.Model):
     
     class Meta:
         unique_together = ('booking', 'partner')
+        indexes = [
+                    models.Index(fields=['booking', 'status'], name='booking_request_status_idx'),
+                ]
+
 
     def __str__(self):
         return f"BookingRequest {self.id}: {self.booking.user.full_name} - {self.partner.full_name} - {self.status}"
