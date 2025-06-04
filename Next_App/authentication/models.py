@@ -78,7 +78,9 @@ class Partner(CustomUser):
     # experience = models.CharField(max_length=255, null=True, blank=True)
     is_verified = models.BooleanField(default=False, db_index=True)
     experience = models.IntegerField(null=True, blank=True, db_index=True)  # Changed from CharField
-    
+    avg_rating = models.DecimalField(max_digits=3, decimal_places=2, null=True, blank=True, default=None)
+
+
     total_earnings = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
 
     # Personal Information
@@ -155,6 +157,12 @@ class Partner(CustomUser):
             print(f"Failed to update Razorpay contact: {resp.text}")
 
 
+    def update_avg_rating(self):
+            from django.db.models import Avg
+            avg = self.assignments.filter(review__isnull=False).aggregate(avg_rating=Avg('review__rating'))['avg_rating']
+            self.avg_rating = avg if avg is not None else None
+            self.save(update_fields=['avg_rating'])
+
 
 
     def __str__(self):
@@ -210,7 +218,6 @@ class Booking(models.Model):
     partner_type = models.CharField(max_length=10, choices=PARTNER_TYPE_CHOICES)
     partner = models.ForeignKey(Partner, on_delete=models.SET_NULL, null=True, blank=True, related_name='assignments')
     
-    avg_rating = models.DecimalField(max_digits=3, decimal_places=2, null=True, blank=True, default=None)
     
     
     # Booking details
@@ -260,11 +267,7 @@ class Booking(models.Model):
         self.total_amount = base_rate * rate_multiplier * Decimal(self.hours)
         return self.total_amount
 
-    def update_avg_rating(self):
-            from django.db.models import Avg
-            avg = self.assignments.filter(review__isnull=False).aggregate(avg_rating=Avg('review__rating'))['avg_rating']
-            self.avg_rating = avg if avg is not None else None
-            self.save(update_fields=['avg_rating'])
+
 
     class Meta:
             indexes = [
