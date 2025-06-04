@@ -9,14 +9,14 @@ class CustomUserSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 class PartnerSerializer(serializers.ModelSerializer):
-    average_rating = serializers.SerializerMethodField(read_only=True)
+    # average_rating = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Partner
         fields = [
             'id', 'phone_number', 'email', 'full_name', 'education', 'experience', 'is_verified',
             'secondary_phone_number', 'languages_known', 'dob', 'bank_username', 
-            'bank_account_number', 'ifsc_code', 'address', 'average_rating'
+            'bank_account_number', 'ifsc_code', 'address', 'avg_rating'
         ]
         read_only_fields = ['id', 'is_verified', 'phone_number']
 
@@ -24,9 +24,9 @@ class PartnerSerializer(serializers.ModelSerializer):
     #     from django.db.models import Avg
     #     return obj.assignments.filter(review__isnull=False).aggregate(avg_rating=Avg('review__rating'))['avg_rating']
 
-    def get_average_rating(self, obj):
-            # Use pre-annotated value if available, else compute
-            return getattr(obj, 'avg_rating', None)
+    # def get_average_rating(self, obj):
+    #         # Use pre-annotated value if available, else compute
+    #         return getattr(obj, 'avg_rating', None)
 
 class ServiceTypeSerializer(serializers.ModelSerializer):
     # Adding a custom field to remove underscores from the 'name' field for the serialized output

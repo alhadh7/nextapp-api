@@ -126,7 +126,6 @@ class BookingHistoryView(generics.ListAPIView):
         ).annotate(
             # accepted_requests_count=Count('requests', filter=Q(requests__status='accepted')),
             accepted_requests_count=Count('requests', filter=Q(requests__status='accepted'), distinct=True),
-            avg_rating=Avg('partner__assignments__review__rating', filter=Q(partner__assignments__review__isnull=False))
         ).order_by('-created_at')
 
         return queryset
@@ -1480,6 +1479,10 @@ class CreateReviewView(APIView):
             # Save the review
             review = serializer.save()
             
+            # Update partner's avg_rating
+            if booking.partner:
+                booking.partner.update_avg_rating()
+                
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

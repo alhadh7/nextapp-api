@@ -210,6 +210,9 @@ class Booking(models.Model):
     partner_type = models.CharField(max_length=10, choices=PARTNER_TYPE_CHOICES)
     partner = models.ForeignKey(Partner, on_delete=models.SET_NULL, null=True, blank=True, related_name='assignments')
     
+    avg_rating = models.DecimalField(max_digits=3, decimal_places=2, null=True, blank=True, default=None)
+    
+    
     # Booking details
     is_instant = models.BooleanField(default=True)  # True for "Book Now", False for "Book Later"
     hours = models.PositiveIntegerField()
@@ -256,6 +259,12 @@ class Booking(models.Model):
         rate_multiplier = Decimal(1.5) if self.partner_type == 'trained' else Decimal(1.0)
         self.total_amount = base_rate * rate_multiplier * Decimal(self.hours)
         return self.total_amount
+
+    def update_avg_rating(self):
+            from django.db.models import Avg
+            avg = self.assignments.filter(review__isnull=False).aggregate(avg_rating=Avg('review__rating'))['avg_rating']
+            self.avg_rating = avg if avg is not None else None
+            self.save(update_fields=['avg_rating'])
 
     class Meta:
             indexes = [
