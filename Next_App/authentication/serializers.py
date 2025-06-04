@@ -9,6 +9,8 @@ class CustomUserSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
 class PartnerSerializer(serializers.ModelSerializer):
+    average_rating = serializers.SerializerMethodField(read_only=True)
+
     class Meta:
         model = Partner
         fields = [
