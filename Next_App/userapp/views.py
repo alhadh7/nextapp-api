@@ -106,6 +106,7 @@ from django.db.models import Count, Q
 
 from django.db.models import Avg, Count, Q
 
+
 class BookingHistoryView(generics.ListAPIView):
     serializer_class = BookingDetailSerializer
     authentication_classes = [JWTAuthentication]
@@ -119,20 +120,16 @@ class BookingHistoryView(generics.ListAPIView):
             partner=user if is_partner else user,
             status__in=['completed', 'cancelled']
         ).select_related(
-            'user', 'service_type', 'partner', 'partner__user_ptr', 'released_by', 'released_by__user_ptr'
+            'user', 'service_type', 'partner', 'partner__customuser_ptr', 'released_by', 'released_by__customuser_ptr'
         ).prefetch_related(
             'requests', 'extensions', 'review'
         ).annotate(
-            accepted_requests_count=Count('requests', filter=Q(requests__status='accepted'))
+            accepted_requests_count=Count('requests', filter=Q(requests__status='accepted')),
+            avg_rating=Avg('partner__assignments__review__rating', filter=Q(partner__assignments__review__isnull=False))
         ).order_by('-created_at')
 
-        # Annotate avg_rating for partners
-        queryset = queryset.annotate(
-            avg_rating=Avg('partner__assignments__review__rating', filter=Q(partner__assignments__review__isnull=False))
-        )
-
         return queryset
-
+    
 class BookingDetailView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
