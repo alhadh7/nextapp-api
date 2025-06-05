@@ -436,7 +436,7 @@ class BookingAvailablePartnersView(APIView):
             is_verified=True
         ).annotate(
             experience_int=Cast('experience', IntegerField())
-        ).select_related('user_ptr')  # Assuming Partner inherits from CustomUser
+        ).select_related('customuser_ptr')  # Assuming Partner inherits from CustomUser
         
         if booking.partner_type == 'trained':
             partners = partners.filter(experience_int__gte=2)
