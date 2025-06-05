@@ -73,6 +73,8 @@ MIDDLEWARE = [
     'silk.middleware.SilkyMiddleware',
     'django_otp.middleware.OTPMiddleware',
 
+    'adminapp.middleware.AdminOnlySilkMiddleware',
+
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
