@@ -4,12 +4,15 @@ import re
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 
+import re
+
 def is_valid_phone_number(phone_number):
     """
-    Validates that the phone number is in international format, e.g., +12345678901
+    Validates that the phone number has exactly 10 digits.
     """
-    phone_pattern = re.compile(r'^\+\d{10,15}$')
+    phone_pattern = re.compile(r'^\d{10}$')
     return bool(phone_pattern.match(phone_number))
+
 
 def is_valid_email(email):
     """
