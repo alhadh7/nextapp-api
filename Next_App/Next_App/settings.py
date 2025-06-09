@@ -124,12 +124,12 @@ import os
 #  test render db
 DATABASES = {
     "default": dj_database_url.config(
-        default="postgresql://next_app_postgres_user:noxIo6uphCiYJ7KNnzGW24APo8O99Pfi@dpg-d0ep2h95pdvs73atou50-a.oregon-postgres.render.com/next_app_postgres"
+        default="postgresql://next_app_db_user:ZWWNS9lPh4wyeBUKi2FBKyRuT9VFoKTI@dpg-d13869be5dus73egi0gg-a.oregon-postgres.render.com/next_app_db"
     )
 }
 
 
-# for docker setup
+
 # DATABASES = {
 #     "default": {
 #         "ENGINE": "django.db.backends.postgresql",
