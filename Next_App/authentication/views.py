@@ -273,6 +273,10 @@ class RegisterPartnerView(APIView):
         driving_license_back = request.FILES.get('driving_license_back')
         profile_picture = request.FILES.get('profile_picture')
 
+
+
+
+
         # Check if a user (either normal or partner) already exists with the same phone number
         user_exists = CustomUser.objects.filter(phone_number=phone_number, is_partner=True).exists()
         if user_exists:

@@ -17,6 +17,8 @@ from django.utils import timezone
 from django.db.models import Q
 from datetime import datetime
 
+from django.db.models import Avg
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -67,7 +69,7 @@ class PartnerHomeView(APIView):
 
         # Average rating
         reviews = Review.objects.filter(booking__partner=partner)
-        average_rating = reviews.aggregate(models.Avg('rating'))['rating__avg'] or 0
+        average_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
 
 
         return Response({
