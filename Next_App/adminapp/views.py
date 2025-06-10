@@ -16,6 +16,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 
+from Next_App.authentication.utilities.utils import send_push_notification
+
 from .forms import AdminLoginForm, TOTPVerificationForm
 from .auth import setup_totp_device, get_totp_uri
 from .models import AdminProfile
@@ -553,11 +555,30 @@ def partner_list(request):
         partner_id = request.POST.get('partner_id')
         partner = get_object_or_404(Partner, id=partner_id)
 
+        # Store original is_verified status for comparison
+        original_is_verified = partner.is_verified
+
         partner.full_name = request.POST.get('full_name')
         partner.phone_number = request.POST.get('phone_number')
         partner.education = request.POST.get('education')
         partner.is_verified = bool(request.POST.get('is_verified'))
         partner.save()
+        
+        # Check if is_verified status has changed
+        if original_is_verified != partner.is_verified:
+            # Send FCM notification to the partner
+            notification_title = "Verification Status Updated"
+            notification_body = (
+                f"Your account has been {'verified' if partner.is_verified else 'unverified'}."
+            )
+            data = {"type": "verification_update", "partner_id": str(partner.id)}
+            send_push_notification(
+                user=partner.user,  # Assuming Partner model is linked to a User model
+                title=notification_title,
+                body=notification_body,
+                data=data
+            )
+        
         
         messages.success(request, "Partner updated successfully.")
         return redirect('adminapp:partner_list')
