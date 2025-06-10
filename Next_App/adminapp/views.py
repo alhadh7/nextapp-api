@@ -16,7 +16,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 
-from Next_App.authentication.utilities.utils import send_push_notification
+from authentication.utilities.utils import send_push_notification
 
 from .forms import AdminLoginForm, TOTPVerificationForm
 from .auth import setup_totp_device, get_totp_uri
