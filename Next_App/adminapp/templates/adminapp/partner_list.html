@@ -4,7 +4,6 @@
 {% block header %}Partners{% endblock %}
 
 {% block content %}
-<!-- Alpine.js for modal and interactivity -->
 <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
 <div class="mb-4 flex justify-between items-center">
@@ -23,14 +22,12 @@
                 <th class="py-2 px-4 border-b text-left">Wallet Balance</th>
                 <th class="py-2 px-4 border-b text-left">Last Payout</th>
                 <th class="py-2 px-4 border-b text-left">Total Earnings</th>
-
-
                 <th class="py-2 px-4 border-b text-left">Actions</th>
             </tr>
         </thead>
         <tbody>
             {% for partner in page_obj %}
-            <tr x-data="{ openModal: false }">
+            <tr x-data="{ openModal: false, openDetailsModal: false }">
                 <td class="py-2 px-4 border-b">{{ partner.id }}</td>
                 <td class="py-2 px-4 border-b">{{ partner.full_name }}</td>
                 <td class="py-2 px-4 border-b">{{ partner.phone_number }}</td>
@@ -45,35 +42,22 @@
                 <td class="py-2 px-4 border-b">₹{{ partner.wallet_balance|default:"N/A" }}</td>
                 <td class="py-2 px-4 border-b">{{ partner.last_payout|date:"Y-m-d H:i" }}</td>
                 <td class="py-2 px-4 border-b">₹{{ partner.total_earnings }}</td>
-                <td class="py-2 px-4 border-b space-x-2">
-                    <!-- Edit -->
-                    <a href="#" @click.prevent="openModal = true" class="text-blue-500 hover:underline">Edit</a>
-
-                    <!-- Delete -->
+                <td class="py-2 px-4 border-b space-y-1">
+                    <a href="#" @click.prevent="openModal = true" class="text-blue-500 hover:underline">Edit</a><br>
+                    <button @click="openDetailsModal = true" class="text-indigo-500 hover:underline">View Details</button><br>
                     <form method="post" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this partner?');">
                         {% csrf_token %}
                         <input type="hidden" name="partner_id" value="{{ partner.id }}">
                         <button type="submit" name="delete_partner" class="text-red-500 hover:underline">Delete</button>
-                    </form>
-
-                 
-                    <!-- Trigger Payout -->
-                    <form method="post" style="display:inline;" action="{% url 'adminapp:trigger_partner_payout' partner.id %}"
+                    </form><br>
+                    <form method="post" action="{% url 'adminapp:trigger_partner_payout' partner.id %}"
                         onsubmit="return confirm('Are you sure you want to trigger payout?');">
                         {% csrf_token %}
-                        <button type="submit"
-                                class="text-red-500 hover:underline">
-                             Payout
-                        </button>
+                        <button type="submit" class="text-red-500 hover:underline">Payout</button>
                     </form>
 
-
                     <!-- Edit Modal -->
-                    <div
-                        x-show="openModal"
-                        x-cloak
-                        class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center"
-                    >
+                    <div x-show="openModal" x-cloak class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
                         <div @click.away="openModal = false" class="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
                             <div class="flex justify-between items-center mb-4">
                                 <h3 class="text-lg font-semibold">Edit Partner</h3>
@@ -110,18 +94,79 @@
                             </form>
                         </div>
                     </div>
+
+                    <!-- Details Modal -->
+                    <div x-show="openDetailsModal" x-cloak class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center">
+                        <div @click.away="openDetailsModal = false" class="bg-white rounded-lg shadow-lg w-full max-w-3xl p-6 overflow-y-auto max-h-[90vh]">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-semibold">Partner Details</h3>
+                                <button @click="openDetailsModal = false" class="text-gray-500 hover:text-gray-700 text-xl">&times;</button>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                                <div><strong>DOB:</strong> {{ partner.dob }}</div>
+                                <div><strong>Secondary Phone:</strong> {{ partner.secondary_phone_number }}</div>
+                                <div><strong>Languages:</strong> {{ partner.languages_known }}</div>
+                                <div><strong>Experience:</strong> {{ partner.experience }}</div>
+                                <div><strong>Rating:</strong> {{ partner.avg_rating }}</div>
+                                <div><strong>Address:</strong> {{ partner.address }}</div>
+
+                                <div><strong>Bank Name:</strong> {{ partner.bank_username }}</div>
+                                <div><strong>Account Number:</strong> {{ partner.bank_account_number }}</div>
+                                <div><strong>IFSC:</strong> {{ partner.ifsc_code }}</div>
+                            </div>
+
+                            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {% if partner.adhar_card_front %}
+                                <div>
+                                    <strong>Aadhar Front:</strong>
+                                    <img src="{{ partner.adhar_card_front.url }}" class="w-full mt-1 rounded border" />
+                                </div>
+                                {% endif %}
+                                {% if partner.adhar_card_back %}
+                                <div>
+                                    <strong>Aadhar Back:</strong>
+                                    <img src="{{ partner.adhar_card_back.url }}" class="w-full mt-1 rounded border" />
+                                </div>
+                                {% endif %}
+                                {% if partner.driving_license_front %}
+                                <div>
+                                    <strong>DL Front:</strong>
+                                    <img src="{{ partner.driving_license_front.url }}" class="w-full mt-1 rounded border" />
+                                </div>
+                                {% endif %}
+                                {% if partner.driving_license_back %}
+                                <div>
+                                    <strong>DL Back:</strong>
+                                    <img src="{{ partner.driving_license_back.url }}" class="w-full mt-1 rounded border" />
+                                </div>
+                                {% endif %}
+                                {% if partner.profile_picture %}
+                                <div>
+                                    <strong>Profile Picture:</strong>
+                                    <img src="{{ partner.profile_picture.url }}" class="w-full mt-1 rounded border" />
+                                </div>
+                                {% endif %}
+                                {% if partner.medical_certificate %}
+                                <div>
+                                    <strong>Medical Certificate:</strong>
+                                    <a href="{{ partner.medical_certificate.url }}" target="_blank" class="text-blue-600 underline">View File</a>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="6" class="py-4 text-center text-gray-500">No partners found</td>
+                <td colspan="9" class="py-4 text-center text-gray-500">No partners found</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 
-<!-- Pagination -->
 {% if page_obj.has_other_pages %}
 <div class="flex justify-center mt-6">
     <div class="inline-flex">
