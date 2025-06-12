@@ -30,6 +30,8 @@ from authentication.models import (
     BookingRequest, BookingExtension, Review
 )
 
+from django.utils.timezone import now
+
 # Partner views
 class PartnerHomeView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -72,6 +74,23 @@ class PartnerHomeView(APIView):
         average_rating = reviews.aggregate(Avg('rating'))['rating__avg'] or 0
 
 
+
+        # Get current time
+        current_datetime = now()
+        current_date = current_datetime.date()
+        current_time = current_datetime.time()
+
+        # Check if any active slot matches current time
+        has_active_slot = PartnerSlot.objects.filter(
+            partner=partner,
+            date=current_date,
+            start_time__lte=current_time,
+            end_time__gte=current_time,
+            is_active=True
+        ).exists()
+
+
+
         return Response({
             "message": "Welcome to Partner Home!",
             "partner_id": partner.id,
@@ -82,7 +101,8 @@ class PartnerHomeView(APIView):
             "is_verified": partner.is_verified,
             "active_bookings": active_bookings_count,
             "total_bookings": total_bookings_count,
-            "average_rating": round(average_rating, 1)
+            "average_rating": round(average_rating, 1),
+            "has_active_slot": has_active_slot 
         }, status=status.HTTP_200_OK)
 
 
