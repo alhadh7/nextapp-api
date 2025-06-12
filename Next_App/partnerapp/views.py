@@ -75,7 +75,7 @@ class PartnerHomeView(APIView):
         return Response({
             "message": "Welcome to Partner Home!",
             "partner_id": partner.id,
-            "full_name": partner.get_full_name(),
+            "full_name": partner.full_name,
             "profile_picture": request.build_absolute_uri(partner.profile_picture.url) if partner.profile_picture else None,
             "education": partner.education,
             "experience": partner.experience,
