@@ -15,13 +15,13 @@ urlpatterns = [
     path('booked-slots/', views.BookedSlotsView.as_view(), name='partner-booked-slots'),
 
     path('bookings/available/', views.AvailableBookingsView.as_view(), name='partner-available-bookings'),
+
     path('bookings/<int:booking_id>/accept/', views.AcceptBookingView.as_view(), name='partner-accept-booking'),
     
     path('bookings/<int:booking_id>/release/', views.ReleaseBookingView.as_view(), name='partner-release-booking'),
 
-
-
     path('bookings/active/', views.PartnerActiveBookingsView.as_view(), name='partner-active-bookings'),
+
     path('bookings/<int:booking_id>/toggle-status/', views.ToggleWorkStatusView.as_view(), name='partner-toggle-work-status'),
 
     path('bookings/<int:booking_id>/extensions/', views.PartnerBookingExtensionsView.as_view(), name='partner-booking-extensions'),

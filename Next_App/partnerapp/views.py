@@ -75,6 +75,8 @@ class PartnerHomeView(APIView):
         return Response({
             "message": "Welcome to Partner Home!",
             "partner_id": partner.id,
+            "full_name": partner.get_full_name(),
+            "profile_picture": request.build_absolute_uri(partner.profile_picture.url) if partner.profile_picture else None,
             "education": partner.education,
             "experience": partner.experience,
             "is_verified": partner.is_verified,
@@ -112,7 +114,9 @@ class PartnerWalletDetailsView(APIView):
             "last_payout_date": wallet.last_payout_date,
             "total_earnings": partner.total_earnings
         }
+        
         serializer = WalletDetailsSerializer(data)
+        
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
