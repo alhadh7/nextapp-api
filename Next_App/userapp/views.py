@@ -156,6 +156,15 @@ class BookingHistoryView(generics.ListAPIView):
 
         return queryset
 
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        for item in response.data:
+            partner = item.get('partner')
+            if partner:
+                for sensitive_field in ['dob', 'bank_username', 'bank_account_number', 'ifsc_code']:
+                    partner.pop(sensitive_field, None)
+        return response
+
     
 class BookingDetailView(APIView):
     authentication_classes = [JWTAuthentication]
