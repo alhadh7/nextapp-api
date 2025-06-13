@@ -717,6 +717,8 @@ def booking_list(request):
     """List all bookings"""
     bookings = Booking.objects.all().order_by('-created_at')
     
+    print(bookings)
+    
     # Set up pagination
     paginator = Paginator(bookings, 20)  # 20 bookings per page
     page_number = request.GET.get('page')
