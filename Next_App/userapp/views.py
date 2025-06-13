@@ -107,6 +107,31 @@ from django.db.models import Count, Q
 from django.db.models import Avg, Count, Q
 
 
+# class BookingHistoryView(generics.ListAPIView):
+#     serializer_class = BookingDetailSerializer
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated]
+
+#     def get_queryset(self):
+#         user = self.request.user
+#         is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        
+#         queryset = Booking.objects.filter(
+#             partner=user if is_partner else user,
+#             status__in=['completed', 'cancelled']
+#         ).select_related(
+#             'user', 'service_type', 'partner', 'partner__customuser_ptr', 'released_by', 'released_by__customuser_ptr'
+#         ).prefetch_related(
+#             'requests', 'extensions', 'review'
+#         ).annotate(
+#             # accepted_requests_count=Count('requests', filter=Q(requests__status='accepted')),
+#             accepted_requests_count=Count('requests', filter=Q(requests__status='accepted'), distinct=True),
+#         ).order_by('-created_at')
+        
+#         print(queryset)    
+
+#         return queryset
+    
 class BookingHistoryView(generics.ListAPIView):
     serializer_class = BookingDetailSerializer
     authentication_classes = [JWTAuthentication]
@@ -114,24 +139,22 @@ class BookingHistoryView(generics.ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
-        
+
         queryset = Booking.objects.filter(
-            partner=user if is_partner else user,
+            user=user,
             status__in=['completed', 'cancelled']
         ).select_related(
-            'user', 'service_type', 'partner', 'partner__customuser_ptr', 'released_by', 'released_by__customuser_ptr'
+            'user', 'service_type', 'partner', 'partner__customuser_ptr', 
+            'released_by', 'released_by__customuser_ptr'
         ).prefetch_related(
             'requests', 'extensions', 'review'
         ).annotate(
-            # accepted_requests_count=Count('requests', filter=Q(requests__status='accepted')),
-            accepted_requests_count=Count('requests', filter=Q(requests__status='accepted'), distinct=True),
+            accepted_requests_count=Count(
+                'requests', filter=Q(requests__status='accepted'), distinct=True
+            )
         ).order_by('-created_at')
-        
-        print(queryset)    
 
         return queryset
-    
 
     
 class BookingDetailView(APIView):
