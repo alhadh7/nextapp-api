@@ -80,6 +80,9 @@ class PartnerHomeView(APIView):
         current_date = current_datetime.date()
         current_time = current_datetime.time()
 
+        print(current_time)
+
+
         # Check if any active slot matches current time
         has_active_slot = PartnerSlot.objects.filter(
             partner=partner,
