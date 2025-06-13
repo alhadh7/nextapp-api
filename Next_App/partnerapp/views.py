@@ -31,6 +31,7 @@ from authentication.models import (
 )
 
 from django.utils.timezone import now
+from django.utils.timezone import localtime
 
 # Partner views
 class PartnerHomeView(APIView):
@@ -76,7 +77,7 @@ class PartnerHomeView(APIView):
 
 
         # Get current time
-        current_datetime = now()
+        current_datetime = localtime()
         current_date = current_datetime.date()
         current_time = current_datetime.time()
 
