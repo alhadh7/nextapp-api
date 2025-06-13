@@ -127,8 +127,12 @@ class BookingHistoryView(generics.ListAPIView):
             # accepted_requests_count=Count('requests', filter=Q(requests__status='accepted')),
             accepted_requests_count=Count('requests', filter=Q(requests__status='accepted'), distinct=True),
         ).order_by('-created_at')
+        
+        print(queryset)    
 
         return queryset
+    
+
     
 class BookingDetailView(APIView):
     authentication_classes = [JWTAuthentication]
