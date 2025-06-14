@@ -270,9 +270,9 @@ SIMPLE_JWT = {
 }
 
 #aishwarya test keys
-RAZORPAY_KEY_ID = 'rzp_test_YkCy6jA2GFlk5F'
-RAZORPAY_KEY_SECRET = 'daOhxZJLVM1ShIlgGtZdLHYt'
-RAZORPAY_WEBHOOK_SECRET = 'zaza12345'
+# RAZORPAY_KEY_ID = 'rzp_test_YkCy6jA2GFlk5F'
+# RAZORPAY_KEY_SECRET = 'daOhxZJLVM1ShIlgGtZdLHYt'
+# RAZORPAY_WEBHOOK_SECRET = 'zaza12345'
 
 #dipson test keys
 RAZORPAY_KEY_ID = 'rzp_test_H3iU2QYL4yxmrj'
