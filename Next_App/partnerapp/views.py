@@ -238,7 +238,7 @@ class BookingDetailView(APIView):
         booking = get_object_or_404(
             Booking.objects.select_related('user', 'service_type', 'partner'),
             id=booking_id,
-            partner_id=request.user.id
+            # partner_id=request.user.id
         )
 
         serializer = BookingDetailSerializer(booking)
