@@ -545,7 +545,7 @@ class CreateBookingOrderView(APIView):
             status='confirmed',
             payment_status='pending'
         )
-        
+        print("x" , booking)
         # Create RazorPay order
         try:
             order_amount = int(booking.total_amount * 100)  # Amount in paise
