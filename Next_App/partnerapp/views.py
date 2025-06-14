@@ -196,33 +196,62 @@ class BookingHistoryView(generics.ListAPIView):
 
 
 
+# class BookingDetailView(APIView):
+#     authentication_classes = [JWTAuthentication]
+#     permission_classes = [IsAuthenticated]
+    
+#     def get(self, request, booking_id):
+
+#         is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+
+#         # Handle both user and partner access
+#         if is_partner:
+
+#             # Partner can only view bookings assigned to them
+#             booking = get_object_or_404(
+#                 Booking, 
+#                 id=booking_id,
+#                 partner_id=request.user.id
+#             )
+#         else:
+#             # Regular user can only view their own bookings
+#             booking = get_object_or_404(
+#                 Booking, 
+#                 id=booking_id,
+#                 user=request.user
+#             )
+        
+#         serializer = BookingDetailSerializer(booking)
+#         return Response(serializer.data, status=status.HTTP_200_OK)
+
 class BookingDetailView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    
+
     def get(self, request, booking_id):
+        # Enforce partner-only access
+        is_partner = request.auth.get('is_partner', False) if request.auth else False
+        if not is_partner:
+            return Response({'detail': 'Only partners can access this view.'}, status=status.HTTP_403_FORBIDDEN)
 
-        is_partner = self.request.auth.get('is_partner', False) if self.request.auth else False
+        # Fetch booking assigned to the partner
+        booking = get_object_or_404(
+            Booking.objects.select_related('user', 'service_type', 'partner'),
+            id=booking_id,
+            partner_id=request.user.id
+        )
 
-        # Handle both user and partner access
-        if is_partner:
-
-            # Partner can only view bookings assigned to them
-            booking = get_object_or_404(
-                Booking, 
-                id=booking_id,
-                partner_id=request.user.id
-            )
-        else:
-            # Regular user can only view their own bookings
-            booking = get_object_or_404(
-                Booking, 
-                id=booking_id,
-                user=request.user
-            )
-        
         serializer = BookingDetailSerializer(booking)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        # Optionally clean partner sensitive info from response
+        data = serializer.data
+        print(data)
+        if data.get('partner'):
+            for field in ['dob', 'bank_username', 'bank_account_number', 'ifsc_code']:
+                data['partner'].pop(field, None)
+
+        return Response(data, status=status.HTTP_200_OK)
+
 
 
 from rest_framework.views import APIView
