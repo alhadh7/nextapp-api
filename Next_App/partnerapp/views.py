@@ -562,7 +562,17 @@ class AvailableBookingsView(APIView):
 
             print('valid',valid_bookings)
             serializer = BookingDetailSerializer(valid_bookings, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            data = serializer.data
+
+            # Add partner_fee = 75% of total_amount
+            for booking in data:
+                try:
+                    total_amount = Decimal(booking.get('total_amount') or 0)
+                    booking['partner_fee'] = round(total_amount * Decimal('0.75'), 2)
+                except:
+                    booking['partner_fee'] = None  # fallback in case of missing/invalid amount
+
+            return Response(data, status=status.HTTP_200_OK)
             
         except Partner.DoesNotExist:
             return Response({
