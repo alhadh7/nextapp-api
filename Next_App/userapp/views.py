@@ -227,8 +227,12 @@ class BookingDetailView(APIView):
 
         serializer = BookingDetailSerializer(booking)
         
+        
+        
         # Optionally clean partner sensitive info from response
         data = serializer.data
+        
+        print(data)
         if data.get('partner'):
             for field in ['dob', 'bank_username', 'bank_account_number', 'ifsc_code']:
                 data['partner'].pop(field, None)
